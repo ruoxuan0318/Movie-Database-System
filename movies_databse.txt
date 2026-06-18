@@ -1,0 +1,50 @@
+1001|The Shawshank Redemption|15.50|9.3
+1002|The Godfather|18.00|9.2
+1003|The Dark Knight|20.00|9.0
+1004|The Godfather Part II|18.00|9.0
+1005|12 Angry Men|12.00|9.0
+1006|Schindlers List|14.50|8.9
+1007|The Lord of the Rings The Return of the King|22.00|8.9
+1008|Pulp Fiction|15.00|8.9
+1009|The Lord of the Rings The Fellowship of the Ring|22.00|8.8
+1010|The Good the Bad and the Ugly|13.50|8.8
+1011|Forrest Gump|15.00|8.8
+1012|Fight Club|16.00|8.8
+1013|The Lord of the Rings The Two Towers|22.00|8.7
+1014|Inception|19.50|8.7
+1015|Star Wars Episode V The Empire Strikes Back|17.00|8.7
+1016|The Matrix|18.50|8.7
+1017|Goodfellas|15.00|8.7
+1018|One Flew Over the Cuckoos Nest|14.00|8.6
+1019|Se7en|16.00|8.6
+1020|Seven Samurai|12.50|8.6
+1021|Its a Wonderful Life|11.00|8.6
+1022|The Silence of the Lambs|15.50|8.6
+1023|Saving Private Ryan|17.00|8.6
+1024|City of God|14.00|8.6
+1025|Life Is Beautiful|13.00|8.6
+1026|The Green Mile|16.50|8.6
+1027|Star Wars Episode IV A New Hope|17.00|8.5
+1028|Interstellar|20.00|8.5
+1029|Terminator 2 Judgment Day|16.00|8.5
+1030|Back to the Future|15.00|8.5
+1031|Spirited Away|14.50|8.5
+1032|The Pianist|15.00|8.5
+1033|Psycho|13.00|8.5
+1034|Parasite|17.50|8.5
+1035|Leon The Professional|16.00|8.5
+1036|The Lion King|14.00|8.5
+1037|Gladiator|18.00|8.5
+1038|American History X|15.00|8.5
+1039|The Departed|17.00|8.5
+1040|The Prestige|18.00|8.5
+1041|Whiplash|15.50|8.5
+1042|The Usual Suspects|15.00|8.5
+1043|Casablanca|11.00|8.5
+1044|Grave of the Fireflies|13.00|8.5
+1045|Harakiri|12.00|8.4
+1046|Untouchables|15.00|8.4
+1047|Modern Times|11.00|8.4
+1048|Once Upon a Time in the West|14.00|8.4
+1049|Cinema Paradiso|13.50|8.4
+1050|Rear Window|13.00|8.4
