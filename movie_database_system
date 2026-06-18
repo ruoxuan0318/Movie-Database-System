@@ -1,0 +1,296 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+
+using namespace std;
+
+// ==========================================
+// 1. STRUCT DEFINITIONS (Project Requirement)
+// Guideline: At least 2 custom structs
+// ==========================================
+
+// Struct holding basic movie records
+struct MovieData {
+    int movieID;
+    string title;
+    double price;
+    double rating;
+};
+
+// Struct holding customer booking information
+struct BookingData {
+    int bookingID;
+    string customerUsername;
+    int movieID;
+    int quantity;
+    double totalAmount;
+};
+
+// ==========================================
+// 2. DYNAMIC NON-PRIMITIVE DATA STRUCTURE (DNP)
+// Guideline: Strictly NO STL headers. Manual memory management (new/delete) required.
+// Implementation: Doubly Linked List for Movie Records
+// ==========================================
+
+// Node definition for movie link structure
+class MovieNode {
+public:
+    MovieData data;
+    MovieNode* next;
+    MovieNode* prev;
+
+    MovieNode(int id, string t, double p, double r) {
+        data.movieID = id;
+        data.title = t;
+        data.price = p;
+        data.rating = r;
+        next = NULL;
+        prev = NULL;
+    }
+};
+
+// Doubly Linked List manager class
+class MovieLinkedList {
+private:
+    MovieNode* head;
+    MovieNode* tail;
+public:
+    MovieLinkedList() {
+        head = NULL;
+        tail = NULL;
+    }
+
+    // Destructor: Recycles all dynamically allocated node memories (Manual dynamic allocation check)
+    ~MovieLinkedList() {
+        MovieNode* current = head;
+        while (current != NULL) {
+            MovieNode* nextNode = current->next;
+            delete current;
+            current = nextNode;
+        }
+    }
+
+    // Appends a new movie record to the tail of the linked list
+    void insertMovie(int id, string t, double p, double r) {
+        MovieNode* newNode = new MovieNode(id, t, p, r);
+        if (head == NULL) {
+            head = tail = newNode;
+        } else {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
+        }
+    }
+
+    // Displays all available movies in a clean tabular view
+    void displayAllMovies() {
+        if (head == NULL) {
+            cout << "No movies available in the database.\n";
+            return;
+        }
+        MovieNode* current = head;
+        cout << "---------------------------------------------------------\n";
+        cout << left << setw(10) << "MovieID" << setw(35) << "Title" << setw(10) << "Price" << setw(10) << "Rating" << endl;
+        cout << "---------------------------------------------------------\n";
+        while (current != NULL) {
+            cout << left << setw(10) << current->data.movieID 
+                 << setw(35) << current->data.title 
+                 << setw(10) << fixed << setprecision(2) << current->data.price 
+                 << setw(10) << current->data.rating << endl;
+            current = current->next;
+        }
+        cout << "---------------------------------------------------------\n";
+    }
+
+    // Getter function returning the head pointer (required for upcoming sorting/searching routines)
+    MovieNode* getHead() { return head; }
+};
+
+// ==========================================
+// 3. OBJECT-ORIENTED PROGRAMMING DESIGN (OOP)
+// Guideline: At least 2 base classes, 3 derived classes, friend functions, constructor/destructor per module
+// ==========================================
+
+// Base Class 1: Abstract User Identity Class
+class User {
+protected:
+    string username;
+    string password;
+public:
+    User(string un, string pw) : username(un), password(pw) {}
+    virtual ~User() {} // Virtual destructor for secure polymorphism
+    virtual void showMenu() = 0; // Pure virtual function enforcing menu polymorphism
+    
+    string getUsername() { return username; }
+};
+
+// Base Class 2: System Audit and Logging Interface (Fulfills the 2nd base class requirement)
+class SystemLogger {
+public:
+    void logAction(string user, string action) {
+        cout << "[AUDIT LOG] User " << user << " performed action: " << action << endl;
+    }
+};
+
+// Derived Class 1: Staff Administration Account (Implements Multiple Inheritance from User & SystemLogger)
+class StaffAdmin : public User, public SystemLogger {
+private:
+    string staffRole;
+public:
+    StaffAdmin(string un, string pw, string role) : User(un, pw), staffRole(role) {}
+    ~StaffAdmin() {}
+
+    void showMenu() {
+        // Main administrative dashboard to be fully populated with sub-operations
+        cout << "\n=== STAFF/ADMIN MODULE ===\n";
+        cout << "Logged in as: " << username << " (" << staffRole << ")\n";
+        cout << "1. Add New Movie Record\n";
+        cout << "2. Edit Movie Record\n";
+        cout << "3. Delete Movie Record\n";
+        cout << "4. Search Movie\n";
+        cout << "5. Sort Movies\n";
+        cout << "6. View Sales Summary Report\n";
+        cout << "7. Logout\n";
+    }
+
+    // Friend function declaration allowing outside authorization checks (Friend requirement)
+    friend void printStaffDetails(StaffAdmin& staff);
+};
+
+// Global definition of friend routine
+void printStaffDetails(StaffAdmin& staff) {
+    cout << "System Friend Auth Check - Staff: " << staff.username << " Role: " << staff.staffRole << endl;
+}
+
+// Derived Class 2: Standard Consumer Class (Inherits from User)
+class Customer : public User {
+private:
+    double loyaltyPoints;
+public:
+    Customer(string un, string pw) : User(un, pw), loyaltyPoints(0.0) {}
+    ~Customer() {}
+
+    void showMenu() {
+        cout << "\n=== CUSTOMER MODULE ===\n";
+        cout << "Logged in as: " << username << " | Loyalty Points: " << loyaltyPoints << "\n";
+        cout << "1. View/Browse Available Movies\n";
+        cout << "2. Book Movie Tickets\n";
+        cout << "3. Modify Booking Details\n";
+        cout << "4. Cancel Booking (Delete)\n";
+        cout << "5. Search Bookings\n";
+        cout << "6. Sort Personal Bookings\n";
+        cout << "7. View/Print Personal Booking Summary\n";
+        cout << "8. Logout\n";
+    }
+};
+
+// Derived Class 3: Premium Tier Client Class (Inherits from Customer - Completes 3 derived classes quota)
+class VIPCustomer : public Customer {
+private:
+    double discountRate;
+public:
+    VIPCustomer(string un, string pw) : Customer(un, pw), discountRate(0.10) {}
+};
+
+
+// ==========================================
+// 4. FILE STORAGE COMPONENT (File I/O)
+// Extracts initial dataset from external storage directly to runtime links
+// ==========================================
+
+void loadMoviesFromFile(MovieLinkedList& list) {
+    ifstream file("movies_database.txt");
+    if (!file.is_open()) {
+        cout << "[ERROR] Failed to open movies_database.txt. Make sure it is in the same folder!\n";
+        return;
+    }
+
+    string line;
+    int count = 0;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        
+        stringstream ss(line);
+        string id_str, title, price_str, rating_str;
+
+        // Splitting tokens based on pipe '|' delimeter
+        getline(ss, id_str, '|');
+        getline(ss, title, '|');
+        getline(ss, price_str, '|');
+        getline(ss, rating_str, '|');
+
+        // Converting raw text segments to functional numeric datatypes
+        int id = stoi(id_str);
+        double price = stod(price_str);
+        double rating = stod(rating_str);
+
+        // Appending directly to hand-written dynamic storage
+        list.insertMovie(id, title, price, rating);
+        count++;
+    }
+    file.close();
+    cout << "[SUCCESS] Successfully loaded " << count << " movie records from database file.\n";
+}
+
+
+// ==========================================
+// 5. MAIN ROUTINE & EXCEPTION RUNTIME FRAMEWORK
+// Ensures type safe user controls through comprehensive Try-Catch loops
+// ==========================================
+int main() {
+    MovieLinkedList movieDB;
+
+    // Phase 1: Ingest database records at system boot
+    cout << "Initializing CineManage System Database...\n";
+    loadMoviesFromFile(movieDB);
+
+    int mainChoice = 0;
+    
+    // Primary runtime shell loop
+    while (true) {
+        cout << "\n=========================================\n";
+        cout << "     WELCOME TO CINEMANAGE SYSTEM        \n";
+        cout << "=========================================\n";
+        cout << "1. Login as Staff/Admin\n";
+        cout << "2. Login as Customer\n";
+        cout << "3. Exit System\n";
+        cout << "Enter your choice: ";
+        
+        // Error handling module monitoring terminal entries (Try-Catch Block Requirement)
+        try {
+            if (!(cin >> mainChoice)) {
+                cin.clear();
+                cin.ignore(1000, '\n');
+                throw invalid_argument("Invalid input format! Please enter a number.");
+            }
+
+            if (mainChoice == 1) {
+                // Initialize admin module context for mock verification
+                StaffAdmin admin("admin1", "admin123", "Manager");
+                admin.showMenu();
+                // Task for Partner A: Integrate switch-case submenus below
+            } 
+            else if (mainChoice == 2) {
+                // Initialize consumer environment and print the uploaded dataset
+                Customer cust("john_doe", "moviepass1");
+                cust.showMenu();
+                cout << "\nShowing available movies to customer:\n";
+                movieDB.displayAllMovies();
+            } 
+            else if (mainChoice == 3) {
+                cout << "Exiting system. Thank you!\n";
+                break;
+            } 
+            else {
+                cout << "Invalid choice! Please choose between 1 and 3.\n";
+            }
+
+        } catch (const invalid_argument& e) {
+            cout << "[EXCEPTION CAUGHT] " << e.what() << endl;
+        }
+    }
+
+    return 0;
+}
