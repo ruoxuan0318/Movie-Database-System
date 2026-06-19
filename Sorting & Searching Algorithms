@@ -1,0 +1,118 @@
+// =============================================================
+// SORTING & SEARCHING ALGORITHMS (manually implemented, no STL)
+// =============================================================
+
+class MovieAlgorithm {
+private:
+    // Quick Sort partition helper
+    static MovieNode* partition(MovieNode* low, MovieNode* high, int mode) {
+        MovieData pivot = high->data;
+        MovieNode* i = low->prev;
+
+        for (MovieNode* j = low; j != high; j = j->next) {
+            bool swap = false;
+            if (mode == 1) {
+                // Sort by price ascending
+                if (j->data.price <= pivot.price) swap = true;
+            } else if (mode == 2) {
+                // Sort by rating descending
+                if (j->data.rating >= pivot.rating) swap = true;
+            } else if (mode == 3) {
+                // Sort by title A-Z
+                if (j->data.title <= pivot.title) swap = true;
+            } else if (mode == 4) {
+                // Sort by genre A-Z
+                if (j->data.genre <= pivot.genre) swap = true;
+            }
+
+            if (swap) {
+                if (i == NULL) i = low;
+                else i = i->next;
+
+                // Swap data between i and j
+                MovieData tmp = i->data;
+                i->data = j->data;
+                j->data = tmp;
+            }
+        }
+
+        if (i == NULL) i = low;
+        else i = i->next;
+
+        MovieData tmp = i->data;
+        i->data = high->data;
+        high->data = tmp;
+
+        return i;
+    }
+
+    // Quick Sort recursive function
+    static void quickSort(MovieNode* low, MovieNode* high, int mode) {
+        if (high != NULL && low != high && low != high->next) {
+            MovieNode* p = partition(low, high, mode);
+            quickSort(low, p->prev, mode);
+            quickSort(p->next, high, mode);
+        }
+    }
+
+public:
+    // Public function to call quick sort on the movie list
+    static void sortMovies(MovieList& list, int mode) {
+        if (list.getHead() == NULL) return;
+        quickSort(list.getHead(), list.getTail(), mode);
+        if (mode == 1)
+            cout << "  Sorted by price (low to high).\n";
+        else if (mode == 2)
+            cout << "  Sorted by rating (high to low).\n";
+        else if (mode == 3)
+            cout << "  Sorted by title (A to Z).\n";
+        else if (mode == 4)
+            cout << "  Sorted by genre (A to Z).\n";
+    }
+
+    // Binary Search by Movie ID
+    // Note: list must be sorted by ID for binary search to work
+    // We convert linked list to array of pointers first
+    static MovieNode* binarySearchByID(MovieList& list, int targetID) {
+        if (list.getHead() == NULL) return NULL;
+
+        int n = list.getCount();
+        MovieNode** arr = new MovieNode*[n];
+
+        // Copy pointers into array
+        MovieNode* curr = list.getHead();
+        for (int i = 0; i < n; i++) {
+            arr[i] = curr;
+            curr = curr->next;
+        }
+
+        // Sort array by ID for binary search
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j]->data.movieID > arr[j+1]->data.movieID) {
+                    MovieNode* temp = arr[j];
+                    arr[j] = arr[j+1];
+                    arr[j+1] = temp;
+                }
+            }
+        }
+
+        // Binary search on sorted array
+        int left = 0, right = n - 1;
+        MovieNode* result = NULL;
+        while (left <= right) {
+            int mid = left + (right - left) / 2;
+            if (arr[mid]->data.movieID == targetID) {
+                result = arr[mid];
+                break;
+            } else if (arr[mid]->data.movieID < targetID) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        delete[] arr;
+        return result;
+    }
+};
