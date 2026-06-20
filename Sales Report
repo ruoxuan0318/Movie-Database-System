@@ -1,0 +1,79 @@
+void saveSalesReport(BookingData* arr, int total) {
+    ofstream file("sales_report.txt");
+    if (!file.is_open()) {
+        cout << "[ERROR] Cannot save sales_report.txt\n";
+        return;
+    }
+    double grandTotal = 0.0;
+    file << "========================================\n";
+    file << "     MOVIE DATABASE SYSTEM\n";
+    file << "         SALES REPORT\n";
+    file << "========================================\n";
+    file << left << setw(6)  << "BID"
+         << setw(15) << "Customer"
+         << setw(25) << "Movie"
+         << setw(5)  << "Qty"
+         << "Amount\n";
+    file << string(60, '-') << "\n";
+    for (int i = 0; i < total; i++) {
+        file << left << setw(6)  << arr[i].bookingID
+             << setw(15) << arr[i].customerName
+             << setw(25) << arr[i].movieTitle
+             << setw(5)  << arr[i].quantity
+             << "RM " << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+        grandTotal += arr[i].totalPrice;
+    }
+    file << string(60, '-') << "\n";
+    file << "Total Bookings : " << total << "\n";
+    file << "Grand Total    : RM " << fixed << setprecision(2) << grandTotal << "\n";
+    file << "========================================\n";
+    file.close();
+    cout << "  Sales report saved to sales_report.txt\n";
+}
+void loadAndDisplaySalesReport() {
+    ifstream file("sales_report.txt");
+    if (!file.is_open()) {
+        cout << "  No sales report found. Generate one from Staff panel first.\n";
+        return;
+    }
+    cout << "\n";
+    string line;
+    while (getline(file, line)) {
+        cout << line << "\n";
+    }
+    file.close();
+}
+void createDefaultFiles() {
+    ifstream checkStaff("staff_accounts.txt");
+    if (!checkStaff.is_open()) {
+        ofstream sf("staff_accounts.txt");
+        sf << "admin|admin123\n";
+        sf << "manager|manager2026\n";
+        sf.close();
+    } else {
+        checkStaff.close();
+    }
+    ifstream checkCust("customer_accounts.txt");
+    if (!checkCust.is_open()) {
+        ofstream cf("customer_accounts.txt");
+        cf << "alice|alice123\n";
+        cf << "bob|bob2026\n";
+        cf.close();
+    } else {
+        checkCust.close();
+    }
+    ifstream checkBook("bookings.txt");
+    if (!checkBook.is_open()) {
+        ofstream bf("bookings.txt");
+        bf.close();
+    } else {
+        checkBook.close();
+    }
+    ifstream checkSales("sales_report.txt");
+    if (!checkSales.is_open()) {
+        ofstream sr("sales_report.txt");
+        sr.close();
+    } else {
+        checkSales.close();
+    }
+}
