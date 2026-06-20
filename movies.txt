@@ -1,0 +1,65 @@
+1001|The Avengers|Action|15.5|8.5
+1002|Interstellar|Sci-Fi|18|9.2
+1003|Frozen 2|Animation|12|7.8
+1004|Inception|Thriller|16.5|8.8
+1005|Avatar: Way of Water|Sci-Fi|20|7.9
+1006|The Dark Knight|Action|17|9
+1007|Titanic|Romance|14|8.9
+1008|Jurassic Park|Adventure|13.5|8.2
+1009|Gladiator|Action|15|8.5
+1010|The Matrix|Sci-Fi|16|8.7
+1011|Spider-Man: No Way Home|Action|18.5|8.3
+1012|The Lion King|Animation|12.5|8.5
+1013|Star Wars: The Force Awakens|Sci-Fi|17.5|7.6
+1014|Toy Story 4|Animation|13|7.7
+1015|Finding Nemo|Animation|11.5|8.1
+1016|Monsters Inc|Animation|12|8
+1017|Cars|Animation|11|7.2
+1018|Up|Animation|14.5|8.3
+1019|Coco|Animation|15|8.6
+1020|Inside Out|Animation|14|8.2
+1021|The Batman|Action|16.5|8
+1022|Joker|Drama|15.5|8.4
+1023|La La Land|Romance|13.5|8.1
+1024|Whiplash|Drama|14|8.5
+1025|Dune: Part Two|Sci-Fi|19.5|8.7
+1026|Blade Runner 2049|Sci-Fi|17|8
+1027|Arrival|Sci-Fi|15|7.9
+1028|The Martian|Sci-Fi|16|8
+1029|Gravity|Sci-Fi|14.5|7.7
+1030|Interstellar 2|Sci-Fi|18.5|8.5
+1031|The Prestige|Thriller|16|8.5
+1032|Memento|Thriller|15|8.4
+1033|Shutter Island|Thriller|15.5|8.2
+1034|The Departed|Thriller|16|8.5
+1035|Goodfellas|Crime|14.5|8.7
+1036|Pulp Fiction|Crime|15|8.9
+1037|Fight Club|Drama|15.5|8.8
+1038|Forrest Gump|Drama|14|8.8
+1039|The Green Mile|Drama|14.5|8.6
+1040|The Godfather|Crime|18|9.2
+1041|Schindlers List|History|16.5|8.9
+1042|Saving Private Ryan|History|15.5|8.6
+1043|Braveheart|History|14|8.4
+1044|The Lord of the Rings 1|Fantasy|17|8.8
+1045|The Lord of the Rings 2|Fantasy|17.5|8.7
+1046|The Lord of the Rings 3|Fantasy|18|8.9
+1047|The Hobbit 1|Fantasy|16|7.8
+1048|The Hobbit 2|Fantasy|16.5|7.9
+1049|The Hobbit 3|Fantasy|17|7.5
+1050|The Chronicles of Narnia|Fantasy|13.5|6.9
+1051|Gladiator II|Action|19|8.2
+1052|Deadpool 3|Action|17.5|8.4
+1053|Oppenheimer|History|19.5|9.3
+1054|Barbie|Comedy|14|7.3
+1055|Spider-Man: Spider-Verse|Animation|16|9
+1056|The Batman Part II|Action|18.5|8.6
+1057|Joker: Folie a Deux|Drama|17|7.1
+1058|Dune: Part One|Sci-Fi|16.5|8.1
+1059|Guardians of the Galaxy 3|Action|16|8.3
+1060|Top Gun: Maverick|Action|18|8.9
+1061|Avatar|Sci-Fi|15|7.9
+1062|Avengers: Endgame|Action|19|8.8
+1063|Avengers: Infinity War|Action|18.5|8.9
+1064|Iron Man|Action|14|7.9
+1065|Iron Man 2|Action|14.5|7
