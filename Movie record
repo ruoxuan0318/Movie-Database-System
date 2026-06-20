@@ -1,21 +1,10 @@
-// =============================================================
-// SUBJECT  : TDS4223 DATA STRUCTURE AND ALGORITHMS (TERM 2610)
-// PROJECT  : Movie Database System
-// FILE     : Project_GR1.cpp
-// COMPILER : Dev-C++ only (NO STL used)
-// =============================================================
-
 #include <iostream>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-
+#include <stdexcept>
 using namespace std;
-
-// =============================================================
-// STRUCT 1: Movie record - stores all movie info
-// =============================================================
 struct MovieData {
     int movieID;
     string title;
@@ -23,10 +12,6 @@ struct MovieData {
     double price;
     double rating;
 };
-
-// =============================================================
-// STRUCT 2: Booking record - stores customer ticket purchases
-// =============================================================
 struct BookingData {
     int bookingID;
     string customerName;
@@ -35,53 +20,73 @@ struct BookingData {
     int quantity;
     double totalPrice;
 };
-
-
-// =============================================================
-// OVERLOADED FUNCTIONS (x4) - input validation helpers
-// =============================================================
-
-// Overload 1: Check if integer menu choice is in valid range
 bool checkInput(int choice, int minVal, int maxVal) {
     if (choice >= minVal && choice <= maxVal)
         return true;
     return false;
 }
-
-// Overload 2: Check if movie/booking ID is valid (4-digit range)
 bool checkInput(int id) {
     if (id >= 1000 && id <= 9999)
         return true;
     return false;
 }
-
-// Overload 3: Check if price/rating value is a positive number
 bool checkInput(double val) {
     if (val > 0.0 && val <= 999.99)
         return true;
     return false;
 }
-
-// Overload 4: Check if a string is not empty
 bool checkInput(string s) {
     if (!s.empty() && s.length() >= 1)
         return true;
     return false;
 }
-
-
-// =============================================================
-// DYNAMIC NON-PRIMITIVE DATA STRUCTURE: Doubly Linked List
-// Used to store all movie records in memory
-// =============================================================
-
+int stringToInt(string s) {
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+    if (s.length() > 0 && s[0] == '-') {
+        sign = -1;
+        i = 1;
+    }
+    for (; i < (int)s.length(); i++) {
+        if (s[i] >= '0' && s[i] <= '9') {
+            result = result * 10 + (s[i] - '0');
+        }
+    }
+    return result * sign;
+}
+double stringToDouble(string s) {
+    double result = 0.0;
+    double fraction = 0.0;
+    double divisor = 10.0;
+    int sign = 1;
+    int i = 0;
+    bool afterDot = false;
+    if (s.length() > 0 && s[0] == '-') {
+        sign = -1;
+        i = 1;
+    }
+    for (; i < (int)s.length(); i++) {
+        if (s[i] == '.') {
+            afterDot = true;
+            continue;
+        }
+        if (s[i] >= '0' && s[i] <= '9') {
+            if (!afterDot) {
+                result = result * 10 + (s[i] - '0');
+            } else {
+                fraction += (s[i] - '0') / divisor;
+                divisor *= 10;
+            }
+        }
+    }
+    return (result + fraction) * sign;
+}
 class MovieNode {
 public:
     MovieData data;
     MovieNode* next;
     MovieNode* prev;
-
-    // Constructor for MovieNode
     MovieNode(int id, string title, string genre, double price, double rating) {
         data.movieID = id;
         data.title = title;
@@ -92,22 +97,17 @@ public:
         prev = NULL;
     }
 };
-
 class MovieList {
 private:
     MovieNode* head;
     MovieNode* tail;
     int count;
-
 public:
-    // Constructor
     MovieList() {
         head = NULL;
         tail = NULL;
         count = 0;
     }
-
-    // Destructor - free all nodes
     ~MovieList() {
         MovieNode* curr = head;
         while (curr != NULL) {
@@ -119,15 +119,11 @@ public:
         tail = NULL;
         count = 0;
     }
-
     MovieNode* getHead() { return head; }
     MovieNode* getTail() { return tail; }
     int getCount()       { return count; }
-
     void setHead(MovieNode* h) { head = h; }
     void setTail(MovieNode* t) { tail = t; }
-
-    // Insert new movie at end of list
     void insertMovie(int id, string title, string genre, double price, double rating) {
         MovieNode* newNode = new MovieNode(id, title, genre, price, rating);
         if (head == NULL) {
@@ -140,8 +136,6 @@ public:
         }
         count++;
     }
-
-    // Delete movie by ID, return true if found and deleted
     bool deleteMovie(int targetID) {
         MovieNode* curr = head;
         while (curr != NULL) {
@@ -167,8 +161,6 @@ public:
         }
         return false;
     }
-
-    // Find movie by ID, return pointer or NULL
     MovieNode* findMovie(int targetID) {
         MovieNode* curr = head;
         while (curr != NULL) {
@@ -178,20 +170,15 @@ public:
         }
         return NULL;
     }
-
-    // Find movie by title (partial match, case-sensitive)
     MovieNode* findMovieByTitle(string keyword) {
         MovieNode* curr = head;
         while (curr != NULL) {
-            // Check if keyword appears in title
             if (curr->data.title.find(keyword) != string::npos)
                 return curr;
             curr = curr->next;
         }
         return NULL;
     }
-
-    // Display all movies in a table
     void displayAll() {
         if (head == NULL) {
             cout << "  No movies in the database.\n";
@@ -216,8 +203,6 @@ public:
         cout << string(75, '-') << "\n";
         cout << "Total: " << count << " movies\n";
     }
-
-    // Display movies filtered by genre
     void displayByGenre(string genre) {
         cout << "\n--- Movies in genre: " << genre << " ---\n";
         cout << left << setw(8)  << "ID"
