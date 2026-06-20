@@ -1,7 +1,3 @@
-// =============================================================
-// BASE CLASS 1: User - parent for StaffAdmin and Customer
-// =============================================================
-
 class User {
 protected:
     string username;
@@ -12,68 +8,40 @@ public:
         password = p;
     }
     virtual ~User() {}
-
     string getUsername() { return username; }
     string getPassword() { return password; }
-
-    virtual void showMenu() = 0;  // pure virtual
+    virtual void showMenu() = 0;  
 };
-
-
-// =============================================================
-// BASE CLASS 2: Logger - for recording actions
-// =============================================================
-
 class Logger {
 public:
     virtual ~Logger() {}
-
     void logAction(string user, string action) {
         cout << "[LOG] " << user << " -> " << action << "\n";
     }
-
     void logError(string msg) {
         cout << "[ERROR] " << msg << "\n";
     }
 };
-
-
-// =============================================================
-// FORWARD DECLARATIONS for derived classes (needed for friends)
-// =============================================================
 class StaffAdmin;
 class Customer;
 class VIPCustomer;
-
-// Friend function declarations
 void showStaffDetails(const StaffAdmin& s);
 void showCustomerPoints(const Customer& c);
 void transferPoints(Customer& from, VIPCustomer& to);
 void systemSnapshot(const StaffAdmin& s, const Customer& c);
-
-
-// =============================================================
-// DERIVED CLASS 1: StaffAdmin (inherits User + Logger)
-// =============================================================
-
 class StaffAdmin : public User, public Logger {
 private:
     string role;
     int accessLevel;
-
 public:
     StaffAdmin(string u, string p, string r, int lvl) : User(u, p) {
         role = r;
         accessLevel = lvl;
     }
-
     ~StaffAdmin() {
-        // destructor
     }
-
     string getRole()     { return role; }
     int getAccessLevel() { return accessLevel; }
-
     void showMenu() {
         cout << "\n+------------------------------------------+\n";
         cout << "|       STAFF / ADMIN PANEL                |\n";
@@ -96,37 +64,24 @@ public:
         cout << "+------------------------------------------+\n";
         cout << "Choice: ";
     }
-
     friend void showStaffDetails(const StaffAdmin& s);
     friend void systemSnapshot(const StaffAdmin& s, const Customer& c);
 };
-
-
-// =============================================================
-// DERIVED CLASS 2: Customer (inherits User)
-// =============================================================
-
 class Customer : public User, public Logger {
 protected:
     double loyaltyPoints;
     int totalTickets;
-
 public:
     Customer(string u, string p) : User(u, p) {
         loyaltyPoints = 0.0;
         totalTickets = 0;
     }
-
     ~Customer() {
-        // destructor
     }
-
     double getLoyaltyPoints() { return loyaltyPoints; }
     int getTotalTickets()     { return totalTickets; }
-
     void addPoints(double pts)  { loyaltyPoints += pts; }
     void addTickets(int qty)    { totalTickets += qty; }
-
     void showMenu() {
         cout << "\n+------------------------------------------+\n";
         cout << "|         CUSTOMER PANEL                   |\n";
@@ -147,36 +102,24 @@ public:
         cout << "+------------------------------------------+\n";
         cout << "Choice: ";
     }
-
     friend void showCustomerPoints(const Customer& c);
     friend void transferPoints(Customer& from, VIPCustomer& to);
     friend void systemSnapshot(const StaffAdmin& s, const Customer& c);
 };
-
-
-// =============================================================
-// DERIVED CLASS 3: VIPCustomer (inherits Customer)
-// =============================================================
-
 class VIPCustomer : public Customer {
 private:
     double discountRate;
     string vipCardID;
-
 public:
     VIPCustomer(string u, string p, double discount, string cardID) : Customer(u, p) {
         discountRate = discount;
         vipCardID    = cardID;
-        loyaltyPoints = 500.0;  // VIP starts with bonus points
+        loyaltyPoints = 500.0;  
     }
-
     ~VIPCustomer() {
-        // destructor
     }
-
     double getDiscount() { return discountRate; }
     string getCardID()   { return vipCardID; }
-
     void showMenu() {
         cout << "\n+------------------------------------------+\n";
         cout << "|      *** VIP CUSTOMER PANEL ***          |\n";
@@ -198,16 +141,8 @@ public:
         cout << "+------------------------------------------+\n";
         cout << "Choice: ";
     }
-
     friend void transferPoints(Customer& from, VIPCustomer& to);
 };
-
-
-// =============================================================
-// FRIEND FUNCTIONS (x4)
-// =============================================================
-
-// Friend 1: Print staff private details
 void showStaffDetails(const StaffAdmin& s) {
     cout << "\n--- Staff Details (Friend Function) ---\n";
     cout << "Username    : " << s.username << "\n";
@@ -215,8 +150,6 @@ void showStaffDetails(const StaffAdmin& s) {
     cout << "Access Level: " << s.accessLevel << "\n";
     cout << "---------------------------------------\n";
 }
-
-// Friend 2: Show customer loyalty points info
 void showCustomerPoints(const Customer& c) {
     cout << "\n--- Customer Points Info (Friend Function) ---\n";
     cout << "Username     : " << c.username << "\n";
@@ -224,8 +157,6 @@ void showCustomerPoints(const Customer& c) {
     cout << "Total Tickets: " << c.totalTickets << "\n";
     cout << "----------------------------------------------\n";
 }
-
-// Friend 3: Transfer points from Customer to VIPCustomer
 void transferPoints(Customer& from, VIPCustomer& to) {
     cout << "\n--- Transfer Points (Friend Function) ---\n";
     to.totalTickets  = from.totalTickets;
@@ -234,22 +165,12 @@ void transferPoints(Customer& from, VIPCustomer& to) {
     cout << "New VIP balance: " << to.loyaltyPoints << " points\n";
     cout << "-----------------------------------------\n";
 }
-
-// Friend 4: Show snapshot of last active staff and customer
 void systemSnapshot(const StaffAdmin& s, const Customer& c) {
     cout << "\n--- System Snapshot (Friend Function) ---\n";
     cout << "Last Staff  : " << s.username << " (" << s.role << ")\n";
     cout << "Last Customer: " << c.username << "\n";
     cout << "-----------------------------------------\n";
 }
-
-
-// =============================================================
-// FILE HANDLING FUNCTIONS
-// =============================================================
-
-// --- movies.txt ---
-
 void saveMoviesToFile(MovieList& list) {
     ofstream file("movies.txt");
     if (!file.is_open()) {
@@ -264,209 +185,6 @@ void saveMoviesToFile(MovieList& list) {
              << curr->data.price   << "|"
              << curr->data.rating  << "\n";
         curr = curr->next;
-    }
-    file.close();
-}
-
-void loadMoviesFromFile(MovieList& list) {
-    ifstream file("movies.txt");
-    if (!file.is_open()) return;
-
-    string line;
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-        istringstream ss(line);
-        string part;
-        int id;
-        string title, genre;
-        double price, rating;
-
-        try {
-            getline(ss, part, '|'); id     = stoi(part);
-            getline(ss, title,  '|');
-            getline(ss, genre,  '|');
-            getline(ss, part,   '|'); price  = stod(part);
-            getline(ss, part,   '|'); rating = stod(part);
-            list.insertMovie(id, title, genre, price, rating);
-        } catch (...) {
-            // skip bad lines
-        }
-    }
-    file.close();
-}
-
-// --- bookings.txt ---
-
-void saveBookingToFile(BookingData& b) {
-    ofstream file("bookings.txt", ios::app);
-    if (!file.is_open()) {
-        cout << "[ERROR] Cannot open bookings.txt.\n";
-        return;
-    }
-    file << b.bookingID    << "|"
-         << b.customerName << "|"
-         << b.movieID      << "|"
-         << b.movieTitle   << "|"
-         << b.quantity     << "|"
-         << fixed << setprecision(2) << b.totalPrice << "\n";
-    file.close();
-}
-
-void loadBookingsFromFile(BookingData* arr, int& total) {
-    ifstream file("bookings.txt");
-    if (!file.is_open()) return;
-
-    string line;
-    while (getline(file, line) && total < 200) {
-        if (line.empty()) continue;
-        istringstream ss(line);
-        string part;
-        try {
-            getline(ss, part, '|'); arr[total].bookingID    = stoi(part);
-            getline(ss, arr[total].customerName, '|');
-            getline(ss, part, '|'); arr[total].movieID      = stoi(part);
-            getline(ss, arr[total].movieTitle, '|');
-            getline(ss, part, '|'); arr[total].quantity     = stoi(part);
-            getline(ss, part, '|'); arr[total].totalPrice   = stod(part);
-            total++;
-        } catch (...) {
-            // skip bad lines
-        }
-    }
-    file.close();
-}
-
-void rewriteBookingsFile(BookingData* arr, int total) {
-    ofstream file("bookings.txt");
-    if (!file.is_open()) return;
-    for (int i = 0; i < total; i++) {
-        file << arr[i].bookingID    << "|"
-             << arr[i].customerName << "|"
-             << arr[i].movieID      << "|"
-             << arr[i].movieTitle   << "|"
-             << arr[i].quantity     << "|"
-             << fixed << setprecision(2) << arr[i].totalPrice << "\n";
-    }
-    file.close();
-}
-
-// --- staff_accounts.txt ---
-
-bool verifyStaffLogin(string uname, string pass) {
-    ifstream file("staff_accounts.txt");
-    if (!file.is_open()) return false;
-    string line;
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-        istringstream ss(line);
-        string u, p;
-        getline(ss, u, '|');
-        getline(ss, p, '|');
-        if (u == uname && p == pass) {
-            file.close();
-            return true;
-        }
-    }
-    file.close();
-    return false;
-}
-
-// --- customer_accounts.txt ---
-
-bool verifyCustomerLogin(string uname, string pass) {
-    ifstream file("customer_accounts.txt");
-    if (!file.is_open()) return false;
-    string line;
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-        istringstream ss(line);
-        string u, p;
-        getline(ss, u, '|');
-        getline(ss, p, '|');
-        if (u == uname && p == pass) {
-            file.close();
-            return true;
-        }
-    }
-    file.close();
-    return false;
-}
-
-bool checkUsernameExists(string uname) {
-    ifstream file("customer_accounts.txt");
-    if (!file.is_open()) return false;
-    string line;
-    while (getline(file, line)) {
-        if (line.empty()) continue;
-        istringstream ss(line);
-        string u;
-        getline(ss, u, '|');
-        if (u == uname) {
-            file.close();
-            return true;
-        }
-    }
-    file.close();
-    return false;
-}
-
-bool registerCustomer(string uname, string pass) {
-    if (checkUsernameExists(uname)) return false;
-    ofstream file("customer_accounts.txt", ios::app);
-    if (!file.is_open()) return false;
-    file << uname << "|" << pass << "\n";
-    file.close();
-    return true;
-}
-
-// --- sales_report.txt ---
-
-void saveSalesReport(BookingData* arr, int total) {
-    ofstream file("sales_report.txt");
-    if (!file.is_open()) {
-        cout << "[ERROR] Cannot save sales_report.txt\n";
-        return;
-    }
-
-    double grandTotal = 0.0;
-    file << "========================================\n";
-    file << "     MOVIE DATABASE SYSTEM\n";
-    file << "         SALES REPORT\n";
-    file << "========================================\n";
-    file << left << setw(6)  << "BID"
-         << setw(15) << "Customer"
-         << setw(25) << "Movie"
-         << setw(5)  << "Qty"
-         << "Amount\n";
-    file << string(60, '-') << "\n";
-
-    for (int i = 0; i < total; i++) {
-        file << left << setw(6)  << arr[i].bookingID
-             << setw(15) << arr[i].customerName
-             << setw(25) << arr[i].movieTitle
-             << setw(5)  << arr[i].quantity
-             << "RM " << fixed << setprecision(2) << arr[i].totalPrice << "\n";
-        grandTotal += arr[i].totalPrice;
-    }
-
-    file << string(60, '-') << "\n";
-    file << "Total Bookings : " << total << "\n";
-    file << "Grand Total    : RM " << fixed << setprecision(2) << grandTotal << "\n";
-    file << "========================================\n";
-    file.close();
-    cout << "  Sales report saved to sales_report.txt\n";
-}
-
-void loadAndDisplaySalesReport() {
-    ifstream file("sales_report.txt");
-    if (!file.is_open()) {
-        cout << "  No sales report found. Generate one from Staff panel first.\n";
-        return;
-    }
-    cout << "\n";
-    string line;
-    while (getline(file, line)) {
-        cout << line << "\n";
     }
     file.close();
 }
