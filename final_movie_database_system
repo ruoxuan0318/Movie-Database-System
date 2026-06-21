@@ -1,0 +1,2681 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <stdexcept>
+using namespace std;
+struct MovieData {
+    int movieID;
+    string title;
+    string genre;
+    double price;
+    double rating;
+};
+struct BookingData {
+    int bookingID;
+    string customerName;
+    int movieID;
+    string movieTitle;
+    int quantity;
+    double totalPrice;
+};
+bool checkInput(int choice, int minVal, int maxVal) {
+    if (choice >= minVal && choice <= maxVal)
+        return true;
+    return false;
+}
+bool checkInput(int id) {
+    if (id >= 1000 && id <= 9999)
+        return true;
+    return false;
+}
+bool checkInput(double val) {
+    if (val > 0.0 && val <= 999.99)
+        return true;
+    return false;
+}
+bool checkInput(string s) {
+    if (!s.empty() && s.length() >= 1)
+        return true;
+    return false;
+}
+int stringToInt(string s) {
+    int result = 0;
+    int sign = 1;
+    int i = 0;
+    if (s.length() > 0 && s[0] == '-') {
+        sign = -1;
+        i = 1;
+    }
+    for (; i < (int)s.length(); i++) {
+        if (s[i] >= '0' && s[i] <= '9') {
+            result = result * 10 + (s[i] - '0');
+        }
+    }
+    return result * sign;
+}
+double stringToDouble(string s) {
+    double result = 0.0;
+    double fraction = 0.0;
+    double divisor = 10.0;
+    int sign = 1;
+    int i = 0;
+    bool afterDot = false;
+    if (s.length() > 0 && s[0] == '-') {
+        sign = -1;
+        i = 1;
+    }
+    for (; i < (int)s.length(); i++) {
+        if (s[i] == '.') {
+            afterDot = true;
+            continue;
+        }
+        if (s[i] >= '0' && s[i] <= '9') {
+            if (!afterDot) {
+                result = result * 10 + (s[i] - '0');
+            } else {
+                fraction += (s[i] - '0') / divisor;
+                divisor *= 10;
+            }
+        }
+    }
+    return (result + fraction) * sign;
+}
+class MovieNode {
+public:
+    MovieData data;
+    MovieNode* next; 
+    MovieNode* prev; 
+    MovieNode(int id, string title, string genre, double price, double rating) {
+        data.movieID = id;
+        data.title = title;
+        data.genre = genre;
+        data.price = price;
+        data.rating = rating;
+        next = NULL;
+        prev = NULL;
+    }
+};
+class MovieList {
+private:
+    MovieNode* head;
+    MovieNode* tail;
+    int count;
+public:
+    MovieList() {
+        head = NULL;
+        tail = NULL;
+        count = 0;
+    }
+    ~MovieList() {
+        MovieNode* curr = head;
+        while (curr != NULL) {
+            MovieNode* temp = curr->next;
+            delete curr;
+            curr = temp;
+        }
+        head = NULL;
+        tail = NULL;
+        count = 0;
+    }
+    MovieNode* getHead() { return head; }
+    MovieNode* getTail() { return tail; }
+    int getCount()       { return count; }
+    void setHead(MovieNode* h) { head = h; }
+    void setTail(MovieNode* t) { tail = t; }
+    void insertMovie(int id, string title, string genre, double price, double rating) {
+        MovieNode* temp = new MovieNode(id, title, genre, price, rating);
+        if (head == NULL) {
+            head = temp;
+            head->next = NULL;
+            head->prev = NULL; 
+            tail = head;       
+        } else {
+            
+            tail->next = temp; 
+            temp->prev = tail; 
+            
+            tail = temp;       
+        }
+        count++;
+    }
+    bool deleteMovie(int targetID) {
+        MovieNode* curr = head;
+        while (curr != NULL) {
+            if (curr->data.movieID == targetID) {
+                if (curr == head && curr == tail) {
+                    head = NULL;
+                    tail = NULL;
+                } else if (curr == head) {
+                    head = head->next;
+                    if (head != NULL) head->prev = NULL;
+                } else if (curr == tail) {
+                    tail = tail->prev;
+                    if (tail != NULL) tail->next = NULL;
+                } else {
+                    curr->prev->next = curr->next;
+                    curr->next->prev = curr->prev;
+                }
+                delete curr;
+                count--;
+                return true;
+            }
+            curr = curr->next;
+        }
+        return false;
+    }
+    MovieNode* findMovie(int targetID) {
+        MovieNode* curr = head;
+        while (curr != NULL) {
+            if (curr->data.movieID == targetID)
+                return curr;
+            curr = curr->next;
+        }
+        return NULL;
+    }
+    MovieNode* findMovieByTitle(string keyword) {
+        MovieNode* curr = head;
+        while (curr != NULL) {
+            if (curr->data.title.find(keyword) != string::npos)
+                return curr;
+            curr = curr->next;
+        }
+        return NULL;
+    }
+    void displayAll() {
+        if (head == NULL) {
+            cout << "  No movies in the database.\n";
+            return;
+        }
+        cout << "\n";
+        cout << left << setw(8)  << "ID"
+             << setw(35) << "Title"
+             << setw(15) << "Genre"
+             << setw(10) << "Price(RM)"
+             << "Rating\n";
+        cout << string(75, '-') << "\n";
+        MovieNode* curr = head;
+        while (curr != NULL) {
+            cout << left << setw(8)  << curr->data.movieID
+                 << setw(35) << curr->data.title
+                 << setw(15) << curr->data.genre
+                 << setw(10) << fixed << setprecision(2) << curr->data.price
+                 << curr->data.rating << "/10\n";
+            curr = curr->next;
+        }
+        cout << string(75, '-') << "\n";
+        cout << "Total: " << count << " movies\n";
+    }
+    void displayByGenre(string genre) {
+        cout << "\n--- Movies in genre: " << genre << " ---\n";
+        cout << left << setw(8)  << "ID"
+             << setw(35) << "Title"
+             << setw(10) << "Price(RM)"
+             << "Rating\n";
+        cout << string(60, '-') << "\n";
+        MovieNode* curr = head;
+        int found = 0;
+        while (curr != NULL) {
+            if (curr->data.genre == genre) {
+                cout << left << setw(8)  << curr->data.movieID
+                     << setw(35) << curr->data.title
+                     << setw(10) << fixed << setprecision(2) << curr->data.price
+                     << curr->data.rating << "/10\n";
+                found++;
+            }
+            curr = curr->next;
+        }
+        if (found == 0)
+            cout << "  No movies found for this genre.\n";
+        cout << string(60, '-') << "\n";
+    }
+};
+class MovieAlgorithm {
+private:
+    static void Swap(MovieNode* x, MovieNode* y) {
+        MovieData temp = x->data;
+        x->data = y->data;
+        y->data = temp;
+    }
+    static MovieNode* partition(MovieNode* left, MovieNode* right, int mode) {
+        MovieNode* midNode = left;
+        MovieNode* temp = left;
+        int n = 0;
+        while (temp != right->next) {
+            n++;
+            temp = temp->next;
+        }
+        for (int k = 0; k < n / 2; k++) {
+            midNode = midNode->next;
+        }
+        
+        Swap(left, midNode);
+        
+        MovieData pivot = left->data;
+        MovieNode* pivotpos = left;
+        
+        for (MovieNode* i = left->next; i != right->next; i = i->next) {
+            bool compare = false;
+            if (mode == 1) {
+                if (i->data.price < pivot.price) compare = true;
+            } else if (mode == 2) {
+                if (i->data.rating > pivot.rating) compare = true;
+            } else if (mode == 3) {
+                if (i->data.title < pivot.title) compare = true;
+            } else if (mode == 4) {
+                if (i->data.genre < pivot.genre) compare = true;
+            }
+            if (compare) {
+                
+                pivotpos = pivotpos->next;
+                Swap(pivotpos, i);
+            }
+        }
+        Swap(left, pivotpos);
+        return pivotpos;
+    }
+    static void quickSort(MovieNode* left, MovieNode* right, int mode) {
+        MovieNode* pivotpos;
+        if (left != NULL && right != NULL && left != right && left != right->next) {
+            pivotpos = partition(left, right, mode);
+            quickSort(left, pivotpos->prev, mode);
+            quickSort(pivotpos->next, right, mode);
+        }
+    }
+public:
+    static void sortMovies(MovieList& list, int mode) {
+        if (list.getHead() == NULL) return;
+        quickSort(list.getHead(), list.getTail(), mode);
+        if (mode == 1)
+            cout << "  Sorted by price (low to high).\n";
+        else if (mode == 2)
+            cout << "  Sorted by rating (high to low).\n";
+        else if (mode == 3)
+            cout << "  Sorted by title (A to Z).\n";
+        else if (mode == 4)
+            cout << "  Sorted by genre (A to Z).\n";
+    }
+    static MovieNode* binarySearchByID(MovieList& list, int targetID) {
+        if (list.getHead() == NULL) return NULL;
+        int n = list.getCount();
+        MovieNode** arr = new MovieNode*[n];
+        MovieNode* curr = list.getHead();
+        for (int i = 0; i < n; i++) {
+            arr[i] = curr;
+            curr = curr->next;
+        }
+        for (int i = 0; i < n - 1; i++) {
+            for (int j = 0; j < n - i - 1; j++) {
+                if (arr[j]->data.movieID > arr[j+1]->data.movieID) {
+                    MovieNode* temp = arr[j];
+                    arr[j] = arr[j+1];
+                    arr[j+1] = temp;
+                }
+            }
+        }
+        int first = 0;
+        int last = n - 1;
+        int found = 0;
+        int mid;
+        
+        while ((found == 0) && (first <= last)) {
+            mid = (first + last) / 2;
+            if (targetID == arr[mid]->data.movieID) {
+                found = 1;
+            } else {
+                if (targetID < arr[mid]->data.movieID) {
+                    last = mid - 1;
+                } else {
+                    first = mid + 1;
+                }
+            }
+        }
+        MovieNode* result = NULL;
+        if (found) {
+            result = arr[mid];
+        }
+        delete[] arr;
+        return result;
+    }
+};
+class User {
+protected:
+    string username;
+    string password;
+public:
+    User(string u, string p) {
+        username = u;
+        password = p;
+    }
+    virtual ~User() {}
+    string getUsername() { return username; }
+    string getPassword() { return password; }
+    virtual void showMenu() = 0;  
+};
+class Logger {
+public:
+    virtual ~Logger() {}
+    void logAction(string user, string action) {
+        cout << "[LOG] " << user << " -> " << action << "\n";
+    }
+    void logError(string msg) {
+        cout << "[ERROR] " << msg << "\n";
+    }
+};
+class StaffAdmin;
+class Customer;
+class VIPCustomer;
+void showStaffDetails(const StaffAdmin& s);
+void showCustomerPoints(const Customer& c);
+void transferPoints(Customer& from, VIPCustomer& to);
+void systemSnapshot(const StaffAdmin& s, const Customer& c);
+class StaffAdmin : public User, public Logger {
+private:
+    string role;
+    int accessLevel;
+public:
+    StaffAdmin(string u, string p, string r, int lvl) : User(u, p) {
+        role = r;
+        accessLevel = lvl;
+    }
+    ~StaffAdmin() {
+    }
+    string getRole()     { return role; }
+    int getAccessLevel() { return accessLevel; }
+    void showMenu() {
+        cout << "\n+------------------------------------------+\n";
+        cout << "|       STAFF / ADMIN PANEL                |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| User: " << left << setw(34) << username << "|\n";
+        cout << "| Role: " << left << setw(34) << role     << "|\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| 1.  Add New Movie                        |\n";
+        cout << "| 2.  Bulk Add Movies (2+)                 |\n";
+        cout << "| 3.  Edit Movie                           |\n";
+        cout << "| 4.  Edit Two Movies                      |\n";
+        cout << "| 5.  Delete Movie                         |\n";
+        cout << "| 6.  Display Movies                       |\n";
+        cout << "| 7.  Search Movies                        |\n";
+        cout << "| 8.  Sort Movies                          |\n";
+        cout << "| 9.  Monthly Sales Report                 |\n";
+        cout << "| 10. View All Bookings                    |\n";
+        cout << "| 11. Staff Details (Friend Function)      |\n";
+        cout << "| 0.  Logout                               |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "Choice: ";
+    }
+    friend void showStaffDetails(const StaffAdmin& s);
+    friend void systemSnapshot(const StaffAdmin& s, const Customer& c);
+};
+class Customer : public User, public Logger {
+protected:
+    double loyaltyPoints;
+    int totalTickets;
+public:
+    Customer(string u, string p) : User(u, p) {
+        loyaltyPoints = 0.0;
+        totalTickets = 0;
+    }
+    ~Customer() {
+    }
+    double getLoyaltyPoints() { return loyaltyPoints; }
+    int getTotalTickets()     { return totalTickets; }
+    void addPoints(double pts)  { loyaltyPoints += pts; }
+    void addTickets(int qty)    { totalTickets += qty; }
+    void showMenu() {
+        cout << "\n+------------------------------------------+\n";
+        cout << "|         CUSTOMER PANEL                   |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| User: "   << left << setw(34) << username      << "|\n";
+        cout << "| Points: " << left << setw(32) << loyaltyPoints << "|\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| 1.  View Movies                          |\n";
+        cout << "| 2.  Book Tickets                         |\n";
+        cout << "| 3.  View My Bookings                     |\n";
+        cout << "| 4.  Edit My Booking                      |\n";
+        cout << "| 5.  Search Movies                        |\n";
+        cout << "| 6.  Sort Movies                          |\n";
+        cout << "| 7.  My Booking Summary (save/load)       |\n";
+        cout << "| 8.  My Account Summary                   |\n";
+        cout << "| 9.  Points Info (Friend Function)        |\n";
+        cout << "| 0.  Logout                               |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "Choice: ";
+    }
+    friend void showCustomerPoints(const Customer& c);
+    friend void transferPoints(Customer& from, VIPCustomer& to);
+    friend void systemSnapshot(const StaffAdmin& s, const Customer& c);
+};
+class VIPCustomer : public Customer {
+private:
+    double discountRate;
+    string vipCardID;
+public:
+    VIPCustomer(string u, string p, double discount, string cardID) : Customer(u, p) {
+        discountRate = discount;
+        vipCardID    = cardID;
+        loyaltyPoints = 500.0;  
+    }
+    ~VIPCustomer() {
+    }
+    double getDiscount() { return discountRate; }
+    string getCardID()   { return vipCardID; }
+    void showMenu() {
+        cout << "\n+------------------------------------------+\n";
+        cout << "|      *** VIP CUSTOMER PANEL ***          |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| VIP User  : " << left << setw(28) << username      << "|\n";
+        cout << "| Card ID   : " << left << setw(28) << vipCardID     << "|\n";
+        cout << "| Discount  : " << left << setw(27) << (discountRate*100) << "%|\n";
+        cout << "| Points    : " << left << setw(28) << loyaltyPoints << "|\n";
+        cout << "+------------------------------------------+\n";
+        cout << "| 1. View All Movies                       |\n";
+        cout << "| 2. Book Tickets (with VIP discount)      |\n";
+        cout << "| 3. View My Bookings                      |\n";
+        cout << "| 4. Edit My Booking                       |\n";
+        cout << "| 5. Search Movie by ID                    |\n";
+        cout << "| 6. Search Movie by Title                 |\n";
+        cout << "| 7. Sort Movies                           |\n";
+        cout << "| 8. My VIP Account Summary                |\n";
+        cout << "| 0. Logout                                |\n";
+        cout << "+------------------------------------------+\n";
+        cout << "Choice: ";
+    }
+    friend void transferPoints(Customer& from, VIPCustomer& to);
+};
+void showStaffDetails(const StaffAdmin& s) {
+    cout << "\n--- Staff Details (Friend Function) ---\n";
+    cout << "Username    : " << s.username << "\n";
+    cout << "Role        : " << s.role << "\n";
+    cout << "Access Level: " << s.accessLevel << "\n";
+    cout << "---------------------------------------\n";
+}
+void showCustomerPoints(const Customer& c) {
+    cout << "\n--- Customer Points Info (Friend Function) ---\n";
+    cout << "Username     : " << c.username << "\n";
+    cout << "Loyalty Pts  : " << c.loyaltyPoints << "\n";
+    cout << "Total Tickets: " << c.totalTickets << "\n";
+    cout << "----------------------------------------------\n";
+}
+void transferPoints(Customer& from, VIPCustomer& to) {
+    cout << "\n--- Transfer Points (Friend Function) ---\n";
+    to.totalTickets  = from.totalTickets;
+    to.loyaltyPoints = from.loyaltyPoints + 200.0;
+    cout << "Points from '" << from.username << "' transferred to VIP account.\n";
+    cout << "New VIP balance: " << to.loyaltyPoints << " points\n";
+    cout << "-----------------------------------------\n";
+}
+void systemSnapshot(const StaffAdmin& s, const Customer& c) {
+    cout << "\n--- System Snapshot (Friend Function) ---\n";
+    cout << "Last Staff  : " << s.username << " (" << s.role << ")\n";
+    cout << "Last Customer: " << c.username << "\n";
+    cout << "-----------------------------------------\n";
+}
+void saveMoviesToFile(MovieList& list) {
+    ofstream file("movies.txt");
+    if (!file.is_open()) {
+        cout << "[ERROR] Cannot open movies.txt for writing.\n";
+        return;
+    }
+    MovieNode* curr = list.getHead();
+    while (curr != NULL) {
+        file << curr->data.movieID << "|"
+             << curr->data.title   << "|"
+             << curr->data.genre   << "|"
+             << curr->data.price   << "|"
+             << curr->data.rating  << "\n";
+        curr = curr->next;
+    }
+    file.close();
+}
+void loadMoviesFromFile(MovieList& list) {
+    ifstream file("movies.txt");
+    if (!file.is_open()) return;
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string part;
+        int id;
+        string title, genre;
+        double price, rating;
+        try {
+            getline(ss, part, '|'); id     = stringToInt(part);
+            getline(ss, title,  '|');
+            getline(ss, genre,  '|');
+            getline(ss, part,   '|'); price  = stringToDouble(part);
+            getline(ss, part,   '|'); rating = stringToDouble(part);
+            list.insertMovie(id, title, genre, price, rating);
+        } catch (...) {
+        }
+    }
+    file.close();
+}
+void saveBookingToFile(BookingData& b) {
+    ofstream file("bookings.txt", ios::app);
+    if (!file.is_open()) {
+        cout << "[ERROR] Cannot open bookings.txt.\n";
+        return;
+    }
+    file << b.bookingID    << "|"
+         << b.customerName << "|"
+         << b.movieID      << "|"
+         << b.movieTitle   << "|"
+         << b.quantity     << "|"
+         << fixed << setprecision(2) << b.totalPrice << "\n";
+    file.close();
+}
+void loadBookingsFromFile(BookingData* arr, int& total) {
+    ifstream file("bookings.txt");
+    if (!file.is_open()) return;
+    string line;
+    while (getline(file, line) && total < 200) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string part;
+        try {
+            getline(ss, part, '|'); arr[total].bookingID    = stringToInt(part);
+            getline(ss, arr[total].customerName, '|');
+            getline(ss, part, '|'); arr[total].movieID      = stringToInt(part);
+            getline(ss, arr[total].movieTitle, '|');
+            getline(ss, part, '|'); arr[total].quantity     = stringToInt(part);
+            getline(ss, part, '|'); arr[total].totalPrice   = stringToDouble(part);
+            total++;
+        } catch (...) {
+        }
+    }
+    file.close();
+}
+void rewriteBookingsFile(BookingData* arr, int total) {
+    ofstream file("bookings.txt");
+    if (!file.is_open()) return;
+    for (int i = 0; i < total; i++) {
+        file << arr[i].bookingID    << "|"
+             << arr[i].customerName << "|"
+             << arr[i].movieID      << "|"
+             << arr[i].movieTitle   << "|"
+             << arr[i].quantity     << "|"
+             << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+    }
+    file.close();
+}
+bool verifyStaffLogin(string uname, string pass) {
+    ifstream file("staff_accounts.txt");
+    if (!file.is_open()) return false;
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string u, p;
+        getline(ss, u, '|');
+        getline(ss, p, '|');
+        if (u == uname && p == pass) {
+            file.close();
+            return true;
+        }
+    }
+    file.close();
+    return false;
+}
+bool verifyCustomerLogin(string uname, string pass) {
+    ifstream file("customer_accounts.txt");
+    if (!file.is_open()) return false;
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string u, p;
+        getline(ss, u, '|');
+        getline(ss, p, '|');
+        if (u == uname && p == pass) {
+            file.close();
+            return true;
+        }
+    }
+    file.close();
+    return false;
+}
+bool checkUsernameExists(string uname) {
+    ifstream file("customer_accounts.txt");
+    if (!file.is_open()) return false;
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string u;
+        getline(ss, u, '|');
+        if (u == uname) {
+            file.close();
+            return true;
+        }
+    }
+    file.close();
+    return false;
+}
+bool registerCustomer(string uname, string pass) {
+    if (checkUsernameExists(uname)) return false;
+    ofstream file("customer_accounts.txt", ios::app);
+    if (!file.is_open()) return false;
+    file << uname << "|" << pass << "\n";
+    file.close();
+    return true;
+}
+void saveSalesReport(BookingData* arr, int total) {
+    ofstream file("sales_report.txt");
+    if (!file.is_open()) {
+        cout << "[ERROR] Cannot save sales_report.txt\n";
+        return;
+    }
+    double grandTotal = 0.0;
+    file << "========================================\n";
+    file << "     MOVIE DATABASE SYSTEM\n";
+    file << "         SALES REPORT\n";
+    file << "========================================\n";
+    file << left << setw(6)  << "BID"
+         << setw(15) << "Customer"
+         << setw(25) << "Movie"
+         << setw(5)  << "Qty"
+         << "Amount\n";
+    file << string(60, '-') << "\n";
+    for (int i = 0; i < total; i++) {
+        file << left << setw(6)  << arr[i].bookingID
+             << setw(15) << arr[i].customerName
+             << setw(25) << arr[i].movieTitle
+             << setw(5)  << arr[i].quantity
+             << "RM " << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+        grandTotal += arr[i].totalPrice;
+    }
+    file << string(60, '-') << "\n";
+    file << "Total Bookings : " << total << "\n";
+    file << "Grand Total    : RM " << fixed << setprecision(2) << grandTotal << "\n";
+    file << "========================================\n";
+    file.close();
+    cout << "  Sales report saved to sales_report.txt\n";
+}
+void loadAndDisplaySalesReport() {
+    ifstream file("sales_report.txt");
+    if (!file.is_open()) {
+        cout << "  No sales report found. Generate one from Staff panel first.\n";
+        return;
+    }
+    cout << "\n";
+    string line;
+    while (getline(file, line)) {
+        cout << line << "\n";
+    }
+    file.close();
+}
+void createDefaultFiles() {
+    ifstream checkStaff("staff_accounts.txt");
+    if (!checkStaff.is_open()) {
+        ofstream sf("staff_accounts.txt");
+        sf << "admin|admin123\n";
+        sf << "manager|manager2026\n";
+        sf.close();
+    } else {
+        checkStaff.close();
+    }
+    ifstream checkCust("customer_accounts.txt");
+    if (!checkCust.is_open()) {
+        ofstream cf("customer_accounts.txt");
+        cf << "alice|alice123\n";
+        cf << "bob|bob2026\n";
+        cf.close();
+    } else {
+        checkCust.close();
+    }
+    ifstream checkBook("bookings.txt");
+    if (!checkBook.is_open()) {
+        ofstream bf("bookings.txt");
+        bf.close();
+    } else {
+        checkBook.close();
+    }
+    ifstream checkSales("sales_report.txt");
+    if (!checkSales.is_open()) {
+        ofstream sr("sales_report.txt");
+        sr.close();
+    } else {
+        checkSales.close();
+    }
+}
+void loadDefaultMovies(MovieList& list) {
+    ifstream check("movies.txt");
+    if (check.is_open()) {
+        check.seekg(0, ios::end);
+        if (check.tellg() > 0) {
+            check.close();
+            return;  
+        }
+        check.close();
+    }
+    list.insertMovie(1001, "The Avengers",            "Action",   15.50, 8.5);
+    list.insertMovie(1002, "Interstellar",             "Sci-Fi",   18.00, 9.2);
+    list.insertMovie(1003, "Frozen 2",                 "Animation",12.00, 7.8);
+    list.insertMovie(1004, "Inception",                "Thriller", 16.50, 8.8);
+    list.insertMovie(1005, "Avatar: Way of Water",     "Sci-Fi",   20.00, 7.9);
+    list.insertMovie(1006, "The Dark Knight",          "Action",   17.00, 9.0);
+    list.insertMovie(1007, "Titanic",                  "Romance",  14.00, 8.9);
+    list.insertMovie(1008, "Jurassic Park",            "Adventure",13.50, 8.2);
+    list.insertMovie(1009, "Gladiator",                "Action",   15.00, 8.5);
+    list.insertMovie(1010, "The Matrix",               "Sci-Fi",   16.00, 8.7);
+    list.insertMovie(1011, "Spider-Man: No Way Home",  "Action",   18.50, 8.3);
+    list.insertMovie(1012, "The Lion King",            "Animation",12.50, 8.5);
+    list.insertMovie(1013, "Star Wars: The Force Awakens","Sci-Fi",17.50, 7.6);
+    list.insertMovie(1014, "Toy Story 4",              "Animation",13.00, 7.7);
+    list.insertMovie(1015, "Finding Nemo",             "Animation",11.50, 8.1);
+    list.insertMovie(1016, "Monsters Inc",             "Animation",12.00, 8.0);
+    list.insertMovie(1017, "Cars",                     "Animation",11.00, 7.2);
+    list.insertMovie(1018, "Up",                       "Animation",14.50, 8.3);
+    list.insertMovie(1019, "Coco",                     "Animation",15.00, 8.6);
+    list.insertMovie(1020, "Inside Out",               "Animation",14.00, 8.2);
+    list.insertMovie(1021, "The Batman",               "Action",   16.50, 8.0);
+    list.insertMovie(1022, "Joker",                    "Drama",    15.50, 8.4);
+    list.insertMovie(1023, "La La Land",               "Romance",  13.50, 8.1);
+    list.insertMovie(1024, "Whiplash",                 "Drama",    14.00, 8.5);
+    list.insertMovie(1025, "Dune: Part Two",           "Sci-Fi",   19.50, 8.7);
+    list.insertMovie(1026, "Blade Runner 2049",        "Sci-Fi",   17.00, 8.0);
+    list.insertMovie(1027, "Arrival",                  "Sci-Fi",   15.00, 7.9);
+    list.insertMovie(1028, "The Martian",              "Sci-Fi",   16.00, 8.0);
+    list.insertMovie(1029, "Gravity",                  "Sci-Fi",   14.50, 7.7);
+    list.insertMovie(1030, "Interstellar 2",           "Sci-Fi",   18.50, 8.5);
+    list.insertMovie(1031, "The Prestige",             "Thriller", 16.00, 8.5);
+    list.insertMovie(1032, "Memento",                  "Thriller", 15.00, 8.4);
+    list.insertMovie(1033, "Shutter Island",           "Thriller", 15.50, 8.2);
+    list.insertMovie(1034, "The Departed",             "Thriller", 16.00, 8.5);
+    list.insertMovie(1035, "Goodfellas",               "Crime",    14.50, 8.7);
+    list.insertMovie(1036, "Pulp Fiction",             "Crime",    15.00, 8.9);
+    list.insertMovie(1037, "Fight Club",               "Drama",    15.50, 8.8);
+    list.insertMovie(1038, "Forrest Gump",             "Drama",    14.00, 8.8);
+    list.insertMovie(1039, "The Green Mile",           "Drama",    14.50, 8.6);
+    list.insertMovie(1040, "The Godfather",            "Crime",    18.00, 9.2);
+    list.insertMovie(1041, "Schindlers List",          "History",  16.50, 8.9);
+    list.insertMovie(1042, "Saving Private Ryan",      "History",  15.50, 8.6);
+    list.insertMovie(1043, "Braveheart",               "History",  14.00, 8.4);
+    list.insertMovie(1044, "The Lord of the Rings 1",  "Fantasy",  17.00, 8.8);
+    list.insertMovie(1045, "The Lord of the Rings 2",  "Fantasy",  17.50, 8.7);
+    list.insertMovie(1046, "The Lord of the Rings 3",  "Fantasy",  18.00, 8.9);
+    list.insertMovie(1047, "The Hobbit 1",             "Fantasy",  16.00, 7.8);
+    list.insertMovie(1048, "The Hobbit 2",             "Fantasy",  16.50, 7.9);
+    list.insertMovie(1049, "The Hobbit 3",             "Fantasy",  17.00, 7.5);
+    list.insertMovie(1050, "The Chronicles of Narnia", "Fantasy",  13.50, 6.9);
+    list.insertMovie(1051, "Gladiator II",             "Action",   19.00, 8.2);
+    list.insertMovie(1052, "Deadpool 3",               "Action",   17.50, 8.4);
+    list.insertMovie(1053, "Oppenheimer",              "History",  19.50, 9.3);
+    list.insertMovie(1054, "Barbie",                   "Comedy",   14.00, 7.3);
+    list.insertMovie(1055, "Spider-Man: Spider-Verse", "Animation",16.00, 9.0);
+    list.insertMovie(1056, "The Batman Part II",       "Action",   18.50, 8.6);
+    list.insertMovie(1057, "Joker: Folie a Deux",      "Drama",    17.00, 7.1);
+    list.insertMovie(1058, "Dune: Part One",           "Sci-Fi",   16.50, 8.1);
+    list.insertMovie(1059, "Guardians of the Galaxy 3","Action",   16.00, 8.3);
+    list.insertMovie(1060, "Top Gun: Maverick",        "Action",   18.00, 8.9);
+    list.insertMovie(1061, "Avatar",                   "Sci-Fi",   15.00, 7.9);
+    list.insertMovie(1062, "Avengers: Endgame",        "Action",   19.00, 8.8);
+    list.insertMovie(1063, "Avengers: Infinity War",   "Action",   18.50, 8.9);
+    list.insertMovie(1064, "Iron Man",                 "Action",   14.00, 7.9);
+    list.insertMovie(1065, "Iron Man 2",               "Action",   14.50, 7.0);
+    saveMoviesToFile(list);
+}
+void staffAddMultipleMovies(MovieList& list);
+void staffEditMultipleMovies(MovieList& list);
+void staffDisplayMenu(MovieList& list);
+void staffSearchMenu(MovieList& list);
+void displayMonthlyReport(BookingData* arr, int total, MovieList& list);
+void customerDisplayMenu(MovieList& list);
+void customerSearchMenu(MovieList& list);
+void customerViewAndSaveBookingSummary(BookingData* arr, int total, string username);
+void staffAddMovie(MovieList& list) {
+    cout << "\n--- Add New Movie ---\n";
+    int id;
+    string title, genre;
+    double price, rating;
+    cout << "Enter Movie ID (4 digits, e.g. 1066): ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid ID input.");
+        }
+        if (!checkInput(id))
+            throw out_of_range("ID must be between 1000 and 9999.");
+        if (list.findMovie(id) != NULL)
+            throw runtime_error("A movie with this ID already exists.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    cout << "Enter Title: ";
+    getline(cin, title);
+    if (!checkInput(title)) { cout << "[ERROR] Title cannot be empty.\n"; return; }
+    cout << "Enter Genre (Action/Drama/Sci-Fi/etc): ";
+    getline(cin, genre);
+    if (!checkInput(genre)) { cout << "[ERROR] Genre cannot be empty.\n"; return; }
+    cout << "Enter Price (RM): ";
+    try {
+        cin >> price;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid price input.");
+        }
+        if (!checkInput(price))
+            throw out_of_range("Price must be between 0.01 and 999.99.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cout << "Enter Rating (0.1 - 10.0): ";
+    try {
+        cin >> rating;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid rating input.");
+        }
+        if (rating < 0.1 || rating > 10.0)
+            throw out_of_range("Rating must be between 0.1 and 10.0.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    list.insertMovie(id, title, genre, price, rating);
+    saveMoviesToFile(list);
+    cout << "  Movie added successfully!\n";
+}
+void staffEditMovie(MovieList& list) {
+    cout << "\n--- Edit Movie ---\n";
+    list.displayAll();
+    int id;
+    cout << "Enter Movie ID to edit: ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid ID input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieNode* node = list.findMovie(id);
+    if (node == NULL) {
+        cout << "  Movie ID " << id << " not found.\n";
+        return;
+    }
+    cout << "Current: " << node->data.title << " | " << node->data.genre
+         << " | RM" << node->data.price << " | " << node->data.rating << "/10\n";
+    cout << "What to edit?\n";
+    cout << "1. Title\n2. Genre\n3. Price\n4. Rating\n5. Cancel\n";
+    cout << "Choice: ";
+    int choice;
+    cin >> choice;
+    cin.ignore(1000, '\n');
+    try {
+        if (choice == 1) {
+            cout << "New title: ";
+            string t; getline(cin, t);
+            if (!checkInput(t)) throw invalid_argument("Title cannot be empty.");
+            node->data.title = t;
+        } else if (choice == 2) {
+            cout << "New genre: ";
+            string g; getline(cin, g);
+            if (!checkInput(g)) throw invalid_argument("Genre cannot be empty.");
+            node->data.genre = g;
+        } else if (choice == 3) {
+            cout << "New price (RM): ";
+            double p; cin >> p;
+            if (cin.fail() || !checkInput(p)) throw invalid_argument("Invalid price.");
+            cin.ignore(1000, '\n');
+            node->data.price = p;
+        } else if (choice == 4) {
+            cout << "New rating (0.1-10.0): ";
+            double r; cin >> r;
+            if (cin.fail() || r < 0.1 || r > 10.0) throw invalid_argument("Invalid rating.");
+            cin.ignore(1000, '\n');
+            node->data.rating = r;
+        } else {
+            cout << "  Edit cancelled.\n";
+            return;
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    saveMoviesToFile(list);
+    cout << "  Movie updated successfully!\n";
+}
+void staffDeleteMovie(MovieList& list) {
+    cout << "\n--- Delete Movie ---\n";
+    list.displayAll();
+    int id;
+    cout << "Enter Movie ID to delete: ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    char confirm;
+    cout << "Are you sure you want to delete movie " << id << "? (y/n): ";
+    cin >> confirm;
+    cin.ignore(1000, '\n');
+    if (confirm != 'y' && confirm != 'Y') {
+        cout << "  Delete cancelled.\n";
+        return;
+    }
+    if (list.deleteMovie(id)) {
+        saveMoviesToFile(list);
+        cout << "  Movie deleted successfully.\n";
+    } else {
+        cout << "  Movie ID " << id << " not found.\n";
+    }
+}
+void staffSearchByID(MovieList& list) {
+    cout << "\n--- Search Movie by ID ---\n";
+    int id;
+    cout << "Enter Movie ID: ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieNode* node = MovieAlgorithm::binarySearchByID(list, id);
+    if (node != NULL) {
+        cout << "\n  Found:\n";
+        cout << "  ID    : " << node->data.movieID << "\n";
+        cout << "  Title : " << node->data.title   << "\n";
+        cout << "  Genre : " << node->data.genre   << "\n";
+        cout << "  Price : RM" << fixed << setprecision(2) << node->data.price << "\n";
+        cout << "  Rating: " << node->data.rating  << "/10\n";
+    } else {
+        cout << "  No movie found with ID " << id << ".\n";
+    }
+}
+void staffSearchByTitle(MovieList& list) {
+    cout << "\n--- Search Movie by Title ---\n";
+    cout << "Enter keyword: ";
+    string keyword;
+    cin.ignore(1000, '\n');
+    getline(cin, keyword);
+    if (!checkInput(keyword)) {
+        cout << "[ERROR] Keyword cannot be empty.\n";
+        return;
+    }
+    cout << "\n  Results for '" << keyword << "':\n";
+    cout << left << setw(8) << "ID" << setw(35) << "Title"
+         << setw(15) << "Genre" << setw(10) << "Price" << "Rating\n";
+    cout << string(70, '-') << "\n";
+    int found = 0;
+    MovieNode* curr = list.getHead();
+    while (curr != NULL) {
+        if (curr->data.title.find(keyword) != string::npos) {
+            cout << left << setw(8)  << curr->data.movieID
+                 << setw(35) << curr->data.title
+                 << setw(15) << curr->data.genre
+                 << setw(10) << fixed << setprecision(2) << curr->data.price
+                 << curr->data.rating << "/10\n";
+            found++;
+        }
+        curr = curr->next;
+    }
+    if (found == 0) cout << "  No results found.\n";
+    else cout << "  " << found << " result(s) found.\n";
+}
+void staffSortMenu(MovieList& list) {
+    cout << "\n--- Sort Movies ---\n";
+    cout << "1. By Price (low to high)\n";
+    cout << "2. By Rating (high to low)\n";
+    cout << "3. By Title (A to Z)\n";
+    cout << "4. By Genre (A to Z)\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 4))
+            throw invalid_argument("Please choose 1 to 4.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieAlgorithm::sortMovies(list, choice);
+    list.displayAll();
+}
+void staffViewAllBookings(BookingData* arr, int total) {
+    cout << "\n--- All Bookings ---\n";
+    if (total == 0) {
+        cout << "  No bookings yet.\n";
+        return;
+    }
+    cout << left << setw(6)  << "BID"
+         << setw(14) << "Customer"
+         << setw(8)  << "MovieID"
+         << setw(28) << "Movie"
+         << setw(5)  << "Qty"
+         << "Amount\n";
+    cout << string(70, '-') << "\n";
+    for (int i = 0; i < total; i++) {
+        cout << left << setw(6)  << arr[i].bookingID
+             << setw(14) << arr[i].customerName
+             << setw(8)  << arr[i].movieID
+             << setw(28) << arr[i].movieTitle
+             << setw(5)  << arr[i].quantity
+             << "RM" << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+    }
+    cout << string(70, '-') << "\n";
+    cout << "Total: " << total << " bookings\n";
+}
+int nextBookingID = 5001;  
+void customerBookTicket(MovieList& list, BookingData* arr, int& total,
+                        string username, double discountRate) {
+    cout << "\n--- Book Tickets ---\n";
+    list.displayAll();
+    int id;
+    cout << "Enter Movie ID to book: ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieNode* movie = list.findMovie(id);
+    if (movie == NULL) {
+        cout << "  Movie not found.\n";
+        return;
+    }
+    cout << "  Movie : " << movie->data.title << "\n";
+    cout << "  Price : RM" << fixed << setprecision(2) << movie->data.price << " per ticket\n";
+    int qty;
+    cout << "Number of tickets: ";
+    try {
+        cin >> qty;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid quantity.");
+        }
+        if (qty <= 0) throw invalid_argument("Quantity must be at least 1.");
+        if (qty > 20) throw out_of_range("Maximum 20 tickets per booking.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    double base    = movie->data.price * qty;
+    double disc    = base * discountRate;
+    double total_p = base - disc;
+    if (total >= 200) {
+        cout << "  [ERROR] Booking limit reached.\n";
+        return;
+    }
+    arr[total].bookingID    = nextBookingID++;
+    arr[total].customerName = username;
+    arr[total].movieID      = id;
+    arr[total].movieTitle   = movie->data.title;
+    arr[total].quantity     = qty;
+    arr[total].totalPrice   = total_p;
+    saveBookingToFile(arr[total]);
+    total++;
+    cout << "\n  --- Booking Confirmation ---\n";
+    cout << "  Booking ID: " << (nextBookingID - 1) << "\n";
+    cout << "  Movie     : " << movie->data.title << "\n";
+    cout << "  Tickets   : " << qty << "\n";
+    cout << "  Base Price: RM" << fixed << setprecision(2) << base << "\n";
+    if (discountRate > 0) {
+        cout << "  VIP Disc  : -RM" << disc << " (" << (discountRate * 100) << "% off)\n";
+    }
+    cout << "  Total     : RM" << fixed << setprecision(2) << total_p << "\n";
+    cout << "  Booking confirmed!\n";
+}
+void customerViewMyBookings(BookingData* arr, int total, string username) {
+    cout << "\n--- My Bookings (" << username << ") ---\n";
+    int found = 0;
+    double myTotal = 0.0;
+    cout << left << setw(6)  << "BID"
+         << setw(28) << "Movie"
+         << setw(5)  << "Qty"
+         << "Amount\n";
+    cout << string(50, '-') << "\n";
+    for (int i = 0; i < total; i++) {
+        string cname = arr[i].customerName;
+        if (cname.length() > 5 && cname.substr(cname.length()-5) == "(VIP)")
+            cname = cname.substr(0, cname.length()-5);
+        if (cname == username) {
+            cout << left << setw(6)  << arr[i].bookingID
+                 << setw(28) << arr[i].movieTitle
+                 << setw(5)  << arr[i].quantity
+                 << "RM" << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+            myTotal += arr[i].totalPrice;
+            found++;
+        }
+    }
+    if (found == 0) cout << "  No bookings found.\n";
+    else {
+        cout << string(50, '-') << "\n";
+        cout << "  Total spent: RM" << fixed << setprecision(2) << myTotal << "\n";
+    }
+}
+void customerEditBooking(BookingData* arr, int& total, string username, MovieList& list) {
+    cout << "\n--- Edit My Booking ---\n";
+    customerViewMyBookings(arr, total, username);
+    int bid;
+    cout << "Enter Booking ID to edit: ";
+    try {
+        cin >> bid;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid booking ID.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    int index = -1;
+    for (int i = 0; i < total; i++) {
+        string cname = arr[i].customerName;
+        if (cname.length() > 5 && cname.substr(cname.length()-5) == "(VIP)")
+            cname = cname.substr(0, cname.length()-5);
+        if (arr[i].bookingID == bid && cname == username) {
+            index = i;
+            break;
+        }
+    }
+    if (index == -1) {
+        cout << "  Booking not found or not yours.\n";
+        return;
+    }
+    cout << "Booking: " << arr[index].movieTitle
+         << " x" << arr[index].quantity
+         << " = RM" << fixed << setprecision(2) << arr[index].totalPrice << "\n";
+    cout << "1. Change quantity\n2. Cancel booking\n3. Go back\nChoice: ";
+    int choice;
+    cin >> choice;
+    cin.ignore(1000, '\n');
+    if (choice == 1) {
+        int newQty;
+        cout << "New quantity (1-20): ";
+        try {
+            cin >> newQty;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Invalid quantity.");
+            }
+            if (newQty <= 0 || newQty > 20)
+                throw out_of_range("Quantity must be 1 to 20.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.ignore(1000, '\n');
+            return;
+        }
+        cin.ignore(1000, '\n');
+        MovieNode* movie = list.findMovie(arr[index].movieID);
+        if (movie == NULL) {
+            cout << "  Movie no longer in database.\n";
+            return;
+        }
+        arr[index].quantity   = newQty;
+        arr[index].totalPrice = movie->data.price * newQty;
+        rewriteBookingsFile(arr, total);
+        cout << "  Booking updated. New total: RM"
+             << fixed << setprecision(2) << arr[index].totalPrice << "\n";
+    } else if (choice == 2) {
+        for (int i = index; i < total - 1; i++) {
+            arr[i] = arr[i+1];
+        }
+        total--;
+        rewriteBookingsFile(arr, total);
+        cout << "  Booking cancelled.\n";
+    } else {
+        cout << "  No changes made.\n";
+    }
+}
+void customerSearchByID(MovieList& list) {
+    cout << "\n--- Search Movie by ID ---\n";
+    int id;
+    cout << "Enter Movie ID: ";
+    try {
+        cin >> id;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieNode* node = MovieAlgorithm::binarySearchByID(list, id);
+    if (node != NULL) {
+        cout << "\n  Found:\n";
+        cout << "  ID    : " << node->data.movieID << "\n";
+        cout << "  Title : " << node->data.title   << "\n";
+        cout << "  Genre : " << node->data.genre   << "\n";
+        cout << "  Price : RM" << fixed << setprecision(2) << node->data.price << "\n";
+        cout << "  Rating: " << node->data.rating  << "/10\n";
+    } else {
+        cout << "  No movie with ID " << id << " found.\n";
+    }
+}
+void customerSearchByTitle(MovieList& list) {
+    cout << "\n--- Search Movie by Title ---\n";
+    cout << "Enter keyword: ";
+    string keyword;
+    getline(cin, keyword);
+    if (!checkInput(keyword)) {
+        cout << "[ERROR] Keyword cannot be empty.\n";
+        return;
+    }
+    cout << "\n  Search results for '" << keyword << "':\n";
+    cout << left << setw(8) << "ID" << setw(35) << "Title"
+         << setw(15) << "Genre" << setw(10) << "Price" << "Rating\n";
+    cout << string(70, '-') << "\n";
+    int found = 0;
+    MovieNode* curr = list.getHead();
+    while (curr != NULL) {
+        if (curr->data.title.find(keyword) != string::npos) {
+            cout << left << setw(8)  << curr->data.movieID
+                 << setw(35) << curr->data.title
+                 << setw(15) << curr->data.genre
+                 << setw(10) << fixed << setprecision(2) << curr->data.price
+                 << curr->data.rating << "/10\n";
+            found++;
+        }
+        curr = curr->next;
+    }
+    if (found == 0) cout << "  No results.\n";
+    else cout << "  " << found << " result(s).\n";
+}
+void customerSortMenu(MovieList& list) {
+    cout << "\n--- Sort Movies ---\n";
+    cout << "1. By Price (low to high)\n";
+    cout << "2. By Rating (high to low)\n";
+    cout << "3. By Title (A to Z)\n";
+    cout << "4. By Genre (A to Z)\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 4))
+            throw invalid_argument("Choose 1 to 4.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieAlgorithm::sortMovies(list, choice);
+    list.displayAll();
+}
+void customerAccountSummary(string username, double points, int tickets,
+                            BookingData* arr, int total) {
+    cout << "\n=== My Account Summary ===\n";
+    cout << "Username      : " << username << "\n";
+    cout << "Loyalty Points: " << points << "\n";
+    cout << "Total Tickets : " << tickets << "\n";
+    double totalSpent = 0.0;
+    int myBookings = 0;
+    for (int i = 0; i < total; i++) {
+        string cname = arr[i].customerName;
+        if (cname.length() > 5 && cname.substr(cname.length()-5) == "(VIP)")
+            cname = cname.substr(0, cname.length()-5);
+        if (cname == username) {
+            totalSpent += arr[i].totalPrice;
+            myBookings++;
+        }
+    }
+    cout << "My Bookings   : " << myBookings << "\n";
+    cout << "Total Spent   : RM" << fixed << setprecision(2) << totalSpent << "\n";
+    char save;
+    cout << "Save my summary to a file? (y/n): ";
+    cin >> save;
+    cin.ignore(1000, '\n');
+    if (save == 'y' || save == 'Y') {
+        string fname = username + "_summary.txt";
+        ofstream f(fname.c_str());
+        if (f.is_open()) {
+            f << "=== Account Summary for " << username << " ===\n";
+            f << "Loyalty Points: " << points << "\n";
+            f << "Total Tickets : " << tickets << "\n";
+            f << "My Bookings   : " << myBookings << "\n";
+            f << "Total Spent   : RM" << fixed << setprecision(2) << totalSpent << "\n";
+            f.close();
+            cout << "  Summary saved to " << fname << "\n";
+        }
+    }
+}
+void runStaffModule(MovieList& list, BookingData* allBookings, int& bookingTotal) {
+    string uname, pass;
+    cout << "\n--- Staff Login ---\n";
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyStaffLogin(uname, pass)) {
+        cout << "  Login failed. Wrong username or password.\n";
+        return;
+    }
+    StaffAdmin staff(uname, pass, "Cinema Manager", 3);
+    staff.logAction(uname, "Staff Login");
+    cout << "  Login successful! Welcome, " << uname << ".\n";
+    int choice = -1;
+    while (choice != 0) {
+        staff.showMenu();
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 11))
+                throw out_of_range("Choice must be 0 to 11.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (choice == 1) {
+            cout << "You can add multiple movies. Enter the first movie:\n";
+            staffAddMovie(list);
+            char addMore;
+            cout << "Add another movie? (y/n): ";
+            cin >> addMore;
+            cin.ignore(1000, '\n');
+            if (addMore == 'y' || addMore == 'Y') {
+                staffAddMovie(list);
+            }
+        } else if (choice == 2) {
+            staffAddMultipleMovies(list);
+        } else if (choice == 3) {
+            staffEditMovie(list);
+            char editMore;
+            cout << "Edit another movie? (y/n): ";
+            cin >> editMore;
+            cin.ignore(1000, '\n');
+            if (editMore == 'y' || editMore == 'Y') {
+                staffEditMovie(list);
+            }
+        } else if (choice == 4) {
+            staffEditMultipleMovies(list);
+        } else if (choice == 5) {
+            staffDeleteMovie(list);
+        } else if (choice == 6) {
+            staffDisplayMenu(list);
+        } else if (choice == 7) {
+            staffSearchMenu(list);
+        } else if (choice == 8) {
+            staffSortMenu(list);
+        } else if (choice == 9) {
+            displayMonthlyReport(allBookings, bookingTotal, list);
+        } else if (choice == 10) {
+            staffViewAllBookings(allBookings, bookingTotal);
+        } else if (choice == 11) {
+            showStaffDetails(staff);
+        } else if (choice == 0) {
+            staff.logAction(uname, "Staff Logout");
+            cout << "  Logged out. Goodbye, " << uname << ".\n";
+        }
+    }
+}
+void runCustomerRegister() {
+    cout << "\n--- Customer Registration ---\n";
+    string uname, pass, passConfirm;
+    cout << "Choose a username: ";
+    cin >> uname;
+    cin.ignore(1000, '\n');
+    if (!checkInput(uname)) {
+        cout << "  [ERROR] Username cannot be empty.\n";
+        return;
+    }
+    if (checkUsernameExists(uname)) {
+        cout << "  [ERROR] Username already taken. Please choose another.\n";
+        return;
+    }
+    cout << "Choose a password: ";
+    cin >> pass;
+    cout << "Confirm password : ";
+    cin >> passConfirm;
+    cin.ignore(1000, '\n');
+    if (pass != passConfirm) {
+        cout << "  [ERROR] Passwords don't match.\n";
+        return;
+    }
+    if (!checkInput(pass)) {
+        cout << "  [ERROR] Password cannot be empty.\n";
+        return;
+    }
+    if (registerCustomer(uname, pass)) {
+        cout << "  Account created! You can now login.\n";
+    } else {
+        cout << "  [ERROR] Could not create account.\n";
+    }
+}
+void runCustomerModule(MovieList& list, BookingData* allBookings, int& bookingTotal) {
+    string uname, pass;
+    cout << "\n--- Customer Login ---\n";
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyCustomerLogin(uname, pass)) {
+        cout << "  Login failed. Wrong username or password.\n";
+        return;
+    }
+    Customer cust(uname, pass);
+    cust.logAction(uname, "Customer Login");
+    cout << "  Login successful! Welcome, " << uname << ".\n";
+    int choice = -1;
+    while (choice != 0) {
+        cust.showMenu();
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 9))
+                throw out_of_range("Choice must be 0 to 9.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (choice == 1) {
+            customerDisplayMenu(list);
+        } else if (choice == 2) {
+            customerBookTicket(list, allBookings, bookingTotal, uname, 0.0);
+            cust.addPoints(10.0);
+            cust.addTickets(1);
+            char again;
+            cout << "Book another movie? (y/n): ";
+            cin >> again;
+            cin.ignore(1000, '\n');
+            if (again == 'y' || again == 'Y') {
+                customerBookTicket(list, allBookings, bookingTotal, uname, 0.0);
+                cust.addPoints(10.0);
+                cust.addTickets(1);
+            }
+        } else if (choice == 3) {
+            customerViewMyBookings(allBookings, bookingTotal, uname);
+        } else if (choice == 4) {
+            customerEditBooking(allBookings, bookingTotal, uname, list);
+        } else if (choice == 5) {
+            customerSearchMenu(list);
+        } else if (choice == 6) {
+            customerSortMenu(list);
+        } else if (choice == 7) {
+            customerViewAndSaveBookingSummary(allBookings, bookingTotal, uname);
+        } else if (choice == 8) {
+            customerAccountSummary(uname, cust.getLoyaltyPoints(),
+                                   cust.getTotalTickets(), allBookings, bookingTotal);
+        } else if (choice == 9) {
+            showCustomerPoints(cust);
+        } else if (choice == 0) {
+            cust.logAction(uname, "Customer Logout");
+            cout << "  Logged out. Goodbye, " << uname << ".\n";
+        }
+    }
+}
+void runVIPModule(MovieList& list, BookingData* allBookings, int& bookingTotal) {
+    string uname, pass;
+    cout << "\n--- VIP Customer Login ---\n";
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyCustomerLogin(uname, pass)) {
+        cout << "  Login failed. Wrong username or password.\n";
+        return;
+    }
+    VIPCustomer vip(uname, pass, 0.15, "VIP-CARD-2026");
+    vip.logAction(uname, "VIP Customer Login");
+    cout << "  Welcome VIP member " << uname << "! You have 15% discount on all bookings.\n";
+    int choice = -1;
+    while (choice != 0) {
+        vip.showMenu();
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 8))
+                throw out_of_range("Choice must be 0 to 8.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        string vipDisplayName = uname + "(VIP)";
+        if (choice == 1) {
+            list.displayAll();
+        } else if (choice == 2) {
+            customerBookTicket(list, allBookings, bookingTotal,
+                               vipDisplayName, vip.getDiscount());
+            vip.addPoints(25.0);
+            vip.addTickets(1);
+            char again;
+            cout << "Book another? (y/n): ";
+            cin >> again;
+            cin.ignore(1000, '\n');
+            if (again == 'y' || again == 'Y') {
+                customerBookTicket(list, allBookings, bookingTotal,
+                                   vipDisplayName, vip.getDiscount());
+                vip.addPoints(25.0);
+                vip.addTickets(1);
+            }
+        } else if (choice == 3) {
+            customerViewMyBookings(allBookings, bookingTotal, uname);
+        } else if (choice == 4) {
+            customerEditBooking(allBookings, bookingTotal, uname, list);
+        } else if (choice == 5) {
+            customerSearchByID(list);
+        } else if (choice == 6) {
+            customerSearchByTitle(list);
+        } else if (choice == 7) {
+            customerSortMenu(list);
+        } else if (choice == 8) {
+            customerAccountSummary(uname, vip.getLoyaltyPoints(),
+                                   vip.getTotalTickets(), allBookings, bookingTotal);
+        } else if (choice == 0) {
+            vip.logAction(uname, "VIP Customer Logout");
+            cout << "  Logged out. Goodbye, VIP member " << uname << ".\n";
+        }
+    }
+}
+void displayTopRatedMovies(MovieList& list, int topN) {
+    if (list.getHead() == NULL) {
+        cout << "  No movies available.\n";
+        return;
+    }
+    int n = list.getCount();
+    if (topN > n) topN = n;
+    MovieNode** temp = new MovieNode*[n];
+    MovieNode* curr = list.getHead();
+    for (int i = 0; i < n; i++) {
+        temp[i] = curr;
+        curr = curr->next;
+    }
+    for (int i = 0; i < n - 1; i++) {
+        int maxIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (temp[j]->data.rating > temp[maxIdx]->data.rating)
+                maxIdx = j;
+        }
+        if (maxIdx != i) {
+            MovieNode* t = temp[i];
+            temp[i] = temp[maxIdx];
+            temp[maxIdx] = t;
+        }
+    }
+    cout << "\n--- Top " << topN << " Highest Rated Movies ---\n";
+    cout << left << setw(5) << "Rank"
+         << setw(8)  << "ID"
+         << setw(35) << "Title"
+         << setw(15) << "Genre"
+         << "Rating\n";
+    cout << string(65, '-') << "\n";
+    for (int i = 0; i < topN; i++) {
+        cout << left << setw(5) << (i+1)
+             << setw(8)  << temp[i]->data.movieID
+             << setw(35) << temp[i]->data.title
+             << setw(15) << temp[i]->data.genre
+             << temp[i]->data.rating << "/10\n";
+    }
+    cout << string(65, '-') << "\n";
+    delete[] temp;
+}
+void displayCheapestMovies(MovieList& list, int topN) {
+    if (list.getHead() == NULL) {
+        cout << "  No movies available.\n";
+        return;
+    }
+    int n = list.getCount();
+    if (topN > n) topN = n;
+    MovieNode** temp = new MovieNode*[n];
+    MovieNode* curr = list.getHead();
+    for (int i = 0; i < n; i++) {
+        temp[i] = curr;
+        curr = curr->next;
+    }
+    for (int i = 0; i < n - 1; i++) {
+        int minIdx = i;
+        for (int j = i + 1; j < n; j++) {
+            if (temp[j]->data.price < temp[minIdx]->data.price)
+                minIdx = j;
+        }
+        if (minIdx != i) {
+            MovieNode* t = temp[i];
+            temp[i] = temp[minIdx];
+            temp[minIdx] = t;
+        }
+    }
+    cout << "\n--- Top " << topN << " Cheapest Movies ---\n";
+    cout << left << setw(5)  << "Rank"
+         << setw(8)  << "ID"
+         << setw(35) << "Title"
+         << "Price(RM)\n";
+    cout << string(55, '-') << "\n";
+    for (int i = 0; i < topN; i++) {
+        cout << left << setw(5)  << (i+1)
+             << setw(8)  << temp[i]->data.movieID
+             << setw(35) << temp[i]->data.title
+             << fixed << setprecision(2) << temp[i]->data.price << "\n";
+    }
+    cout << string(55, '-') << "\n";
+    delete[] temp;
+}
+void displayMoviesByPriceRange(MovieList& list, double minPrice, double maxPrice) {
+    cout << "\n--- Movies priced RM" << fixed << setprecision(2) << minPrice
+         << " to RM" << maxPrice << " ---\n";
+    cout << left << setw(8)  << "ID"
+         << setw(35) << "Title"
+         << setw(15) << "Genre"
+         << setw(10) << "Price"
+         << "Rating\n";
+    cout << string(70, '-') << "\n";
+    int found = 0;
+    MovieNode* curr = list.getHead();
+    while (curr != NULL) {
+        if (curr->data.price >= minPrice && curr->data.price <= maxPrice) {
+            cout << left << setw(8)  << curr->data.movieID
+                 << setw(35) << curr->data.title
+                 << setw(15) << curr->data.genre
+                 << setw(10) << fixed << setprecision(2) << curr->data.price
+                 << curr->data.rating << "/10\n";
+            found++;
+        }
+        curr = curr->next;
+    }
+    if (found == 0) cout << "  No movies in this price range.\n";
+    else cout << "  " << found << " movie(s) found.\n";
+    cout << string(70, '-') << "\n";
+}
+void displayBookingStatistics(BookingData* arr, int total, MovieList& list) {
+    if (total == 0) {
+        cout << "  No booking data yet.\n";
+        return;
+    }
+    double grandTotal  = 0.0;
+    int    maxQty      = 0;
+    int    bestIdx     = 0;
+    double maxRevenue  = 0.0;
+    int    bestRevIdx  = 0;
+    int   movieIDs[200];
+    int   movieCount[200];
+    double movieRevenue[200];
+    int   uniqueMovies = 0;
+    for (int i = 0; i < total; i++) {
+        grandTotal += arr[i].totalPrice;
+        if (arr[i].quantity > maxQty) {
+            maxQty   = arr[i].quantity;
+            bestIdx  = i;
+        }
+        bool found = false;
+        for (int j = 0; j < uniqueMovies; j++) {
+            if (movieIDs[j] == arr[i].movieID) {
+                movieCount[j]   += arr[i].quantity;
+                movieRevenue[j] += arr[i].totalPrice;
+                found = true;
+                break;
+            }
+        }
+        if (!found && uniqueMovies < 200) {
+            movieIDs[uniqueMovies]     = arr[i].movieID;
+            movieCount[uniqueMovies]   = arr[i].quantity;
+            movieRevenue[uniqueMovies] = arr[i].totalPrice;
+            uniqueMovies++;
+        }
+    }
+    int maxTickets  = 0;
+    int popularIdx  = 0;
+    for (int i = 0; i < uniqueMovies; i++) {
+        if (movieCount[i] > maxTickets) {
+            maxTickets  = movieCount[i];
+            popularIdx  = i;
+        }
+        if (movieRevenue[i] > maxRevenue) {
+            maxRevenue  = movieRevenue[i];
+            bestRevIdx  = i;
+        }
+    }
+    cout << "\n=== Booking Statistics ===\n";
+    cout << "Total Bookings    : " << total << "\n";
+    cout << "Grand Total Sales : RM" << fixed << setprecision(2) << grandTotal << "\n";
+    cout << "Avg per Booking   : RM" << fixed << setprecision(2) << (grandTotal / total) << "\n";
+    cout << "Unique Movies Sold: " << uniqueMovies << "\n";
+    if (uniqueMovies > 0) {
+        MovieNode* popularMovie = list.findMovie(movieIDs[popularIdx]);
+        string popularTitle = (popularMovie != NULL) ? popularMovie->data.title : "Unknown";
+        MovieNode* topRevMovie  = list.findMovie(movieIDs[bestRevIdx]);
+        string topRevTitle  = (topRevMovie  != NULL) ? topRevMovie->data.title  : "Unknown";
+        cout << "Most Popular Movie: " << popularTitle
+             << " (" << maxTickets << " tickets)\n";
+        cout << "Top Revenue Movie : " << topRevTitle
+             << " (RM" << fixed << setprecision(2) << maxRevenue << ")\n";
+    }
+    cout << "Largest Single Booking: Booking #" << arr[bestIdx].bookingID
+         << " by " << arr[bestIdx].customerName
+         << " (" << maxQty << " tickets)\n";
+    cout << "==========================\n";
+}
+void displayMonthlyReport(BookingData* arr, int total, MovieList& list) {
+    cout << "\n=== Monthly Sales Report ===\n";
+    displayBookingStatistics(arr, total, list);
+    saveSalesReport(arr, total);
+    cout << "Report also saved to sales_report.txt\n";
+}
+void staffAddMultipleMovies(MovieList& list) {
+    int howMany;
+    cout << "\n--- Bulk Add Movies ---\n";
+    cout << "How many movies to add? (1-5): ";
+    try {
+        cin >> howMany;
+        if (cin.fail() || howMany < 1 || howMany > 5)
+            throw invalid_argument("Enter between 1 and 5.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    for (int i = 0; i < howMany; i++) {
+        cout << "\n  Movie " << (i+1) << " of " << howMany << ":\n";
+        staffAddMovie(list);
+    }
+    cout << "  Done adding " << howMany << " movie(s).\n";
+}
+void staffEditMultipleMovies(MovieList& list) {
+    cout << "\n--- Edit Multiple Movies ---\n";
+    cout << "  You can edit 2 movies in this session.\n";
+    staffEditMovie(list);
+    cout << "\n  Now edit the second movie:\n";
+    staffEditMovie(list);
+}
+void staffSearchMenu(MovieList& list) {
+    cout << "\n--- Search Options ---\n";
+    cout << "1. Search by Movie ID (Binary Search)\n";
+    cout << "2. Search by Title (Keyword)\n";
+    cout << "3. Search by Genre\n";
+    cout << "4. Filter by Price Range\n";
+    cout << "5. Show Top 10 Rated Movies\n";
+    cout << "6. Show Top 10 Cheapest Movies\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 6))
+            throw invalid_argument("Choose 1 to 6.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    if (choice == 1) {
+        staffSearchByID(list);
+    } else if (choice == 2) {
+        staffSearchByTitle(list);
+    } else if (choice == 3) {
+        cout << "Enter genre: ";
+        string g; getline(cin, g);
+        list.displayByGenre(g);
+    } else if (choice == 4) {
+        double mn, mx;
+        cout << "Min price (RM): "; cin >> mn;
+        cout << "Max price (RM): "; cin >> mx;
+        cin.ignore(1000, '\n');
+        if (mn < 0 || mx < mn) {
+            cout << "[ERROR] Invalid price range.\n";
+            return;
+        }
+        displayMoviesByPriceRange(list, mn, mx);
+    } else if (choice == 5) {
+        displayTopRatedMovies(list, 10);
+    } else if (choice == 6) {
+        displayCheapestMovies(list, 10);
+    }
+}
+void staffDisplayMenu(MovieList& list) {
+    cout << "\n--- Display Options ---\n";
+    cout << "1. Display All Movies\n";
+    cout << "2. Display by Genre\n";
+    cout << "3. Display Top 5 Rated\n";
+    cout << "4. Display Top 5 Cheapest\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 4))
+            throw invalid_argument("Choose 1 to 4.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    if (choice == 1) {
+        list.displayAll();
+    } else if (choice == 2) {
+        cout << "Enter genre: ";
+        string g; getline(cin, g);
+        list.displayByGenre(g);
+    } else if (choice == 3) {
+        displayTopRatedMovies(list, 5);
+    } else if (choice == 4) {
+        displayCheapestMovies(list, 5);
+    }
+}
+void customerDisplayMenu(MovieList& list) {
+    cout << "\n--- View Movies ---\n";
+    cout << "1. View All Movies\n";
+    cout << "2. View by Genre\n";
+    cout << "3. View Top 5 Rated\n";
+    cout << "4. View Top 5 Cheapest\n";
+    cout << "5. View by Price Range\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 5))
+            throw invalid_argument("Choose 1 to 5.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    if (choice == 1) {
+        list.displayAll();
+    } else if (choice == 2) {
+        cout << "Enter genre (Action/Drama/Sci-Fi/etc): ";
+        string g; getline(cin, g);
+        list.displayByGenre(g);
+    } else if (choice == 3) {
+        displayTopRatedMovies(list, 5);
+    } else if (choice == 4) {
+        displayCheapestMovies(list, 5);
+    } else if (choice == 5) {
+        double mn, mx;
+        cout << "Min price (RM): "; cin >> mn;
+        cout << "Max price (RM): "; cin >> mx;
+        cin.ignore(1000, '\n');
+        if (mn < 0 || mx < mn) {
+            cout << "[ERROR] Invalid price range.\n";
+            return;
+        }
+        displayMoviesByPriceRange(list, mn, mx);
+    }
+}
+void customerSearchMenu(MovieList& list) {
+    cout << "\n--- Search Movies ---\n";
+    cout << "1. Search by Movie ID\n";
+    cout << "2. Search by Title Keyword\n";
+    cout << "3. Search by Genre\n";
+    cout << "Choice: ";
+    int choice;
+    try {
+        cin >> choice;
+        if (cin.fail() || !checkInput(choice, 1, 3))
+            throw invalid_argument("Choose 1 to 3.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.clear(); cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    if (choice == 1) {
+        customerSearchByID(list);
+    } else if (choice == 2) {
+        customerSearchByTitle(list);
+    } else if (choice == 3) {
+        cout << "Enter genre: ";
+        string g; getline(cin, g);
+        list.displayByGenre(g);
+    }
+}
+void customerViewAndSaveBookingSummary(BookingData* arr, int total, string username) {
+    cout << "\n--- My Booking Summary ---\n";
+    customerViewMyBookings(arr, total, username);
+    char save;
+    cout << "\nSave this summary to a file? (y/n): ";
+    cin >> save;
+    cin.ignore(1000, '\n');
+    if (save == 'y' || save == 'Y') {
+        string fname = username + "_bookings.txt";
+        ofstream f(fname.c_str());
+        if (!f.is_open()) {
+            cout << "  [ERROR] Could not create file.\n";
+            return;
+        }
+        f << "=== Booking Summary for " << username << " ===\n";
+        f << left << setw(6)  << "BID"
+          << setw(28) << "Movie"
+          << setw(5)  << "Qty"
+          << "Amount\n";
+        f << string(50, '-') << "\n";
+        double myTotal = 0.0;
+        int count = 0;
+        for (int i = 0; i < total; i++) {
+            string cname = arr[i].customerName;
+            if (cname.length() > 5 && cname.substr(cname.length()-5) == "(VIP)")
+                cname = cname.substr(0, cname.length()-5);
+            if (cname == username) {
+                f << left << setw(6)  << arr[i].bookingID
+                  << setw(28) << arr[i].movieTitle
+                  << setw(5)  << arr[i].quantity
+                  << "RM" << fixed << setprecision(2) << arr[i].totalPrice << "\n";
+                myTotal += arr[i].totalPrice;
+                count++;
+            }
+        }
+        f << string(50, '-') << "\n";
+        f << "Total Bookings: " << count << "\n";
+        f << "Total Spent   : RM" << fixed << setprecision(2) << myTotal << "\n";
+        f.close();
+        cout << "  Summary saved to " << fname << "\n";
+        cout << "\n--- Retrieving from saved file ---\n";
+        ifstream rf(fname.c_str());
+        if (rf.is_open()) {
+            string line;
+            while (getline(rf, line)) cout << line << "\n";
+            rf.close();
+        }
+    }
+}
+struct ReviewData {
+    int reviewID;
+    string customerName;
+    int movieID;
+    string movieTitle;
+    int stars;          
+    string comment;
+};
+void saveReviewToFile(ReviewData& r) {
+    ofstream file("reviews.txt", ios::app);
+    if (!file.is_open()) {
+        cout << "  [ERROR] Cannot open reviews.txt.\n";
+        return;
+    }
+    file << r.reviewID    << "|"
+         << r.customerName << "|"
+         << r.movieID      << "|"
+         << r.movieTitle   << "|"
+         << r.stars        << "|"
+         << r.comment      << "\n";
+    file.close();
+}
+void loadReviewsFromFile(ReviewData* arr, int& total) {
+    ifstream file("reviews.txt");
+    if (!file.is_open()) return;
+    string line;
+    while (getline(file, line) && total < 300) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string part;
+        try {
+            getline(ss, part, '|'); arr[total].reviewID     = stringToInt(part);
+            getline(ss, arr[total].customerName, '|');
+            getline(ss, part, '|'); arr[total].movieID      = stringToInt(part);
+            getline(ss, arr[total].movieTitle,   '|');
+            getline(ss, part, '|'); arr[total].stars        = stringToInt(part);
+            getline(ss, arr[total].comment,      '|');
+            total++;
+        } catch (...) {
+        }
+    }
+    file.close();
+}
+int reviewIDCounter = 8001;
+void customerLeaveReview(MovieList& list, ReviewData* reviews, int& reviewTotal,
+                         string username) {
+    cout << "\n--- Leave a Movie Review ---\n";
+    list.displayAll();
+    int movieID;
+    cout << "Enter Movie ID to review: ";
+    try {
+        cin >> movieID;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid input.");
+        }
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    MovieNode* movie = list.findMovie(movieID);
+    if (movie == NULL) {
+        cout << "  Movie not found.\n";
+        return;
+    }
+    int stars;
+    cout << "Rate this movie (1-5 stars): ";
+    try {
+        cin >> stars;
+        if (cin.fail()) {
+            cin.clear(); cin.ignore(1000, '\n');
+            throw invalid_argument("Invalid rating.");
+        }
+        if (stars < 1 || stars > 5)
+            throw out_of_range("Stars must be 1 to 5.");
+    } catch (exception& e) {
+        cout << "[ERROR] " << e.what() << "\n";
+        cin.ignore(1000, '\n');
+        return;
+    }
+    cin.ignore(1000, '\n');
+    cout << "Write your comment (one line): ";
+    string comment;
+    getline(cin, comment);
+    if (comment.empty()) comment = "No comment.";
+    if (reviewTotal >= 300) {
+        cout << "  [ERROR] Review storage is full.\n";
+        return;
+    }
+    reviews[reviewTotal].reviewID     = reviewIDCounter++;
+    reviews[reviewTotal].customerName = username;
+    reviews[reviewTotal].movieID      = movieID;
+    reviews[reviewTotal].movieTitle   = movie->data.title;
+    reviews[reviewTotal].stars        = stars;
+    reviews[reviewTotal].comment      = comment;
+    saveReviewToFile(reviews[reviewTotal]);
+    reviewTotal++;
+    cout << "  Review submitted! Thank you for your feedback.\n";
+    cout << "  You gave " << stars << " star(s) to '" << movie->data.title << "'.\n";
+}
+void displayReviewsForMovie(ReviewData* reviews, int reviewTotal, int movieID,
+                            string movieTitle) {
+    cout << "\n--- Reviews for: " << movieTitle << " ---\n";
+    int found = 0;
+    double totalStars = 0.0;
+    for (int i = 0; i < reviewTotal; i++) {
+        if (reviews[i].movieID == movieID) {
+            cout << "  [" << reviews[i].reviewID << "] "
+                 << reviews[i].customerName << " - ";
+            for (int s = 0; s < reviews[i].stars; s++) cout << "*";
+            cout << " (" << reviews[i].stars << "/5)\n";
+            cout << "  Comment: " << reviews[i].comment << "\n";
+            cout << "  " << string(40, '-') << "\n";
+            totalStars += reviews[i].stars;
+            found++;
+        }
+    }
+    if (found == 0) {
+        cout << "  No reviews yet for this movie.\n";
+    } else {
+        cout << "  Total Reviews : " << found << "\n";
+        cout << "  Average Rating: " << fixed << setprecision(1)
+             << (totalStars / found) << " / 5.0\n";
+    }
+}
+void staffViewAllReviews(ReviewData* reviews, int reviewTotal) {
+    cout << "\n--- All Movie Reviews ---\n";
+    if (reviewTotal == 0) {
+        cout << "  No reviews yet.\n";
+        return;
+    }
+    cout << left << setw(6)  << "ID"
+         << setw(14) << "Customer"
+         << setw(28) << "Movie"
+         << setw(8)  << "Stars"
+         << "Comment\n";
+    cout << string(75, '-') << "\n";
+    for (int i = 0; i < reviewTotal; i++) {
+        string starStr = "";
+        for (int s = 0; s < reviews[i].stars; s++) starStr += "*";
+        cout << left << setw(6)  << reviews[i].reviewID
+             << setw(14) << reviews[i].customerName
+             << setw(28) << reviews[i].movieTitle
+             << setw(8)  << starStr
+             << reviews[i].comment << "\n";
+    }
+    cout << string(75, '-') << "\n";
+    cout << "Total: " << reviewTotal << " reviews\n";
+}
+void staffMovieReviewReport(ReviewData* reviews, int reviewTotal, MovieList& list) {
+    cout << "\n--- Movie Review Report ---\n";
+    if (reviewTotal == 0) {
+        cout << "  No reviews available.\n";
+        return;
+    }
+    int   mIDs[200];
+    double mStars[200];
+    int   mCount[200];
+    int   unique = 0;
+    for (int i = 0; i < reviewTotal; i++) {
+        bool found = false;
+        for (int j = 0; j < unique; j++) {
+            if (mIDs[j] == reviews[i].movieID) {
+                mStars[j] += reviews[i].stars;
+                mCount[j]++;
+                found = true;
+                break;
+            }
+        }
+        if (!found && unique < 200) {
+            mIDs[unique]   = reviews[i].movieID;
+            mStars[unique] = reviews[i].stars;
+            mCount[unique] = 1;
+            unique++;
+        }
+    }
+    cout << left << setw(8)  << "Movie ID"
+         << setw(35) << "Title"
+         << setw(10) << "Reviews"
+         << "Avg Stars\n";
+    cout << string(58, '-') << "\n";
+    for (int i = 0; i < unique; i++) {
+        MovieNode* m = list.findMovie(mIDs[i]);
+        string title = (m != NULL) ? m->data.title : "Unknown";
+        double avg   = mStars[i] / mCount[i];
+        cout << left << setw(8)  << mIDs[i]
+             << setw(35) << title
+             << setw(10) << mCount[i]
+             << fixed << setprecision(1) << avg << " / 5.0\n";
+    }
+    cout << string(58, '-') << "\n";
+}
+void printLine(int len) {
+    for (int i = 0; i < len; i++) cout << "-";
+    cout << "\n";
+}
+void printHeader(string title) {
+    int len = 44;
+    cout << "\n";
+    printLine(len);
+    int pad = (len - (int)title.length()) / 2;
+    for (int i = 0; i < pad; i++) cout << " ";
+    cout << title << "\n";
+    printLine(len);
+}
+void showAvailableGenres(MovieList& list) {
+    string genres[20];
+    int gCount = 0;
+    MovieNode* curr = list.getHead();
+    while (curr != NULL) {
+        bool found = false;
+        for (int i = 0; i < gCount; i++) {
+            if (genres[i] == curr->data.genre) {
+                found = true;
+                break;
+            }
+        }
+        if (!found && gCount < 20) {
+            genres[gCount++] = curr->data.genre;
+        }
+        curr = curr->next;
+    }
+    cout << "\n  Available genres:\n";
+    for (int i = 0; i < gCount; i++) {
+        cout << "  - " << genres[i] << "\n";
+    }
+}
+void staffViewCustomerAccounts() {
+    cout << "\n--- Registered Customer Accounts ---\n";
+    ifstream file("customer_accounts.txt");
+    if (!file.is_open()) {
+        cout << "  Cannot open customer_accounts.txt\n";
+        return;
+    }
+    int count = 0;
+    string line;
+    cout << left << setw(5) << "No." << "Username\n";
+    cout << string(25, '-') << "\n";
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        istringstream ss(line);
+        string uname;
+        getline(ss, uname, '|');
+        count++;
+        cout << left << setw(5) << count << uname << "\n";
+    }
+    file.close();
+    cout << string(25, '-') << "\n";
+    cout << "Total: " << count << " customer(s)\n";
+}
+void staffDeleteCustomerAccount(string targetUser) {
+    ifstream file("customer_accounts.txt");
+    if (!file.is_open()) {
+        cout << "  Cannot open file.\n";
+        return;
+    }
+    string lines[100];
+    int lineCount = 0;
+    string line;
+    while (getline(file, line) && lineCount < 100) {
+        if (!line.empty()) {
+            lines[lineCount++] = line;
+        }
+    }
+    file.close();
+    bool found = false;
+    ofstream out("customer_accounts.txt");
+    for (int i = 0; i < lineCount; i++) {
+        istringstream ss(lines[i]);
+        string uname;
+        getline(ss, uname, '|');
+        if (uname == targetUser) {
+            found = true;
+            continue;  
+        }
+        out << lines[i] << "\n";
+    }
+    out.close();
+    if (found) cout << "  Account '" << targetUser << "' removed.\n";
+    else        cout << "  Username '" << targetUser << "' not found.\n";
+}
+void runStaffModuleV2(MovieList& list, BookingData* allBookings, int& bookingTotal,
+                      ReviewData* reviews, int& reviewTotal) {
+    string uname, pass;
+    printHeader("STAFF LOGIN");
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyStaffLogin(uname, pass)) {
+        cout << "  Login failed. Wrong username or password.\n";
+        return;
+    }
+    StaffAdmin staff(uname, pass, "Cinema Manager", 3);
+    staff.logAction(uname, "Staff Login");
+    cout << "  Welcome, " << uname << "!\n";
+    int choice = -1;
+    while (choice != 0) {
+        printHeader("STAFF PANEL");
+        cout << "  User : " << uname << "\n\n";
+        cout << "  --- Movie Management ---\n";
+        cout << "  1.  Add New Movie\n";
+        cout << "  2.  Bulk Add Movies\n";
+        cout << "  3.  Edit Movie\n";
+        cout << "  4.  Edit Two Movies\n";
+        cout << "  5.  Delete Movie\n";
+        cout << "  6.  Display Movies\n";
+        cout << "  7.  Search Movies\n";
+        cout << "  8.  Sort Movies\n";
+        cout << "  --- Booking & Reports ---\n";
+        cout << "  9.  Monthly Sales Report\n";
+        cout << "  10. View All Bookings\n";
+        cout << "  11. Booking Statistics\n";
+        cout << "  --- Reviews ---\n";
+        cout << "  12. View All Reviews\n";
+        cout << "  13. Review Report by Movie\n";
+        cout << "  --- Accounts ---\n";
+        cout << "  14. View Customer Accounts\n";
+        cout << "  15. Delete Customer Account\n";
+        cout << "  16. Staff Details (Friend Function)\n";
+        cout << "  0.  Logout\n";
+        cout << "  Choice: ";
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 16))
+                throw out_of_range("Choice must be 0 to 16.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (choice == 1) {
+            staffAddMovie(list);
+        } else if (choice == 2) {
+            staffAddMultipleMovies(list);
+        } else if (choice == 3) {
+            staffEditMovie(list);
+        } else if (choice == 4) {
+            staffEditMultipleMovies(list);
+        } else if (choice == 5) {
+            staffDeleteMovie(list);
+        } else if (choice == 6) {
+            staffDisplayMenu(list);
+        } else if (choice == 7) {
+            staffSearchMenu(list);
+        } else if (choice == 8) {
+            staffSortMenu(list);
+        } else if (choice == 9) {
+            displayMonthlyReport(allBookings, bookingTotal, list);
+        } else if (choice == 10) {
+            staffViewAllBookings(allBookings, bookingTotal);
+        } else if (choice == 11) {
+            displayBookingStatistics(allBookings, bookingTotal, list);
+        } else if (choice == 12) {
+            staffViewAllReviews(reviews, reviewTotal);
+        } else if (choice == 13) {
+            staffMovieReviewReport(reviews, reviewTotal, list);
+        } else if (choice == 14) {
+            staffViewCustomerAccounts();
+        } else if (choice == 15) {
+            cout << "Enter username to delete: ";
+            string del; getline(cin, del);
+            staffDeleteCustomerAccount(del);
+        } else if (choice == 16) {
+            showStaffDetails(staff);
+        } else if (choice == 0) {
+            staff.logAction(uname, "Staff Logout");
+            cout << "  Logged out. Goodbye, " << uname << ".\n";
+        }
+    }
+}
+void runCustomerModuleV2(MovieList& list, BookingData* allBookings, int& bookingTotal,
+                         ReviewData* reviews, int& reviewTotal) {
+    string uname, pass;
+    printHeader("CUSTOMER LOGIN");
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyCustomerLogin(uname, pass)) {
+        cout << "  Login failed. Wrong username or password.\n";
+        return;
+    }
+    Customer cust(uname, pass);
+    cust.logAction(uname, "Customer Login");
+    cout << "  Welcome, " << uname << "!\n";
+    int choice = -1;
+    while (choice != 0) {
+        printHeader("CUSTOMER PANEL");
+        cout << "  User  : " << uname << "\n";
+        cout << "  Points: " << cust.getLoyaltyPoints() << "\n\n";
+        cout << "  --- Movies ---\n";
+        cout << "  1.  Browse Movies\n";
+        cout << "  2.  Show Available Genres\n";
+        cout << "  --- Bookings ---\n";
+        cout << "  3.  Book Tickets\n";
+        cout << "  4.  View My Bookings\n";
+        cout << "  5.  Edit My Booking\n";
+        cout << "  6.  Save & View Booking Summary\n";
+        cout << "  --- Search & Sort ---\n";
+        cout << "  7.  Search Movies\n";
+        cout << "  8.  Sort Movies\n";
+        cout << "  --- Reviews ---\n";
+        cout << "  9.  Leave a Review\n";
+        cout << "  10. View Reviews for a Movie\n";
+        cout << "  --- Account ---\n";
+        cout << "  11. My Account Summary\n";
+        cout << "  12. Points Info (Friend Function)\n";
+        cout << "  0.  Logout\n";
+        cout << "  Choice: ";
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 12))
+                throw out_of_range("Choice must be 0 to 12.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (choice == 1) {
+            customerDisplayMenu(list);
+        } else if (choice == 2) {
+            showAvailableGenres(list);
+        } else if (choice == 3) {
+            customerBookTicket(list, allBookings, bookingTotal, uname, 0.0);
+            cust.addPoints(10.0);
+            cust.addTickets(1);
+            char again;
+            cout << "Book another? (y/n): ";
+            cin >> again;
+            cin.ignore(1000, '\n');
+            if (again == 'y' || again == 'Y') {
+                customerBookTicket(list, allBookings, bookingTotal, uname, 0.0);
+                cust.addPoints(10.0);
+                cust.addTickets(1);
+            }
+        } else if (choice == 4) {
+            customerViewMyBookings(allBookings, bookingTotal, uname);
+        } else if (choice == 5) {
+            customerEditBooking(allBookings, bookingTotal, uname, list);
+        } else if (choice == 6) {
+            customerViewAndSaveBookingSummary(allBookings, bookingTotal, uname);
+        } else if (choice == 7) {
+            customerSearchMenu(list);
+        } else if (choice == 8) {
+            customerSortMenu(list);
+        } else if (choice == 9) {
+            customerLeaveReview(list, reviews, reviewTotal, uname);
+        } else if (choice == 10) {
+            cout << "Enter Movie ID to view reviews: ";
+            int mid; cin >> mid;
+            cin.ignore(1000, '\n');
+            MovieNode* m = list.findMovie(mid);
+            string t = (m != NULL) ? m->data.title : "Unknown";
+            displayReviewsForMovie(reviews, reviewTotal, mid, t);
+        } else if (choice == 11) {
+            customerAccountSummary(uname, cust.getLoyaltyPoints(),
+                                   cust.getTotalTickets(), allBookings, bookingTotal);
+        } else if (choice == 12) {
+            showCustomerPoints(cust);
+        } else if (choice == 0) {
+            cust.logAction(uname, "Customer Logout");
+            cout << "  Logged out. Goodbye, " << uname << ".\n";
+        }
+    }
+}
+void runVIPModuleV2(MovieList& list, BookingData* allBookings, int& bookingTotal,
+                    ReviewData* reviews, int& reviewTotal) {
+    string uname, pass;
+    printHeader("VIP CUSTOMER LOGIN");
+    cout << "Username: ";
+    cin >> uname;
+    cout << "Password: ";
+    cin >> pass;
+    cin.ignore(1000, '\n');
+    if (!verifyCustomerLogin(uname, pass)) {
+        cout << "  Login failed.\n";
+        return;
+    }
+    VIPCustomer vip(uname, pass, 0.15, "VIP-2026-GOLD");
+    vip.logAction(uname, "VIP Login");
+    cout << "  Welcome VIP member " << uname << "! You get 15% off all tickets.\n";
+    int choice = -1;
+    string vipName = uname + "(VIP)";
+    while (choice != 0) {
+        printHeader("VIP PANEL");
+        cout << "  VIP User  : " << uname << "\n";
+        cout << "  Card ID   : VIP-2026-GOLD\n";
+        cout << "  Discount  : 15%\n";
+        cout << "  Points    : " << vip.getLoyaltyPoints() << "\n\n";
+        cout << "  1.  Browse Movies\n";
+        cout << "  2.  Show Available Genres\n";
+        cout << "  3.  Book Tickets (VIP 15% off)\n";
+        cout << "  4.  View My Bookings\n";
+        cout << "  5.  Edit My Booking\n";
+        cout << "  6.  Save & View Booking Summary\n";
+        cout << "  7.  Search Movies\n";
+        cout << "  8.  Sort Movies\n";
+        cout << "  9.  Leave a Review\n";
+        cout << "  10. View Reviews for a Movie\n";
+        cout << "  11. My VIP Account Summary\n";
+        cout << "  0.  Logout\n";
+        cout << "  Choice: ";
+        try {
+            cin >> choice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(choice, 0, 11))
+                throw out_of_range("Choice must be 0 to 11.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (choice == 1) {
+            customerDisplayMenu(list);
+        } else if (choice == 2) {
+            showAvailableGenres(list);
+        } else if (choice == 3) {
+            customerBookTicket(list, allBookings, bookingTotal,
+                               vipName, vip.getDiscount());
+            vip.addPoints(25.0);
+            vip.addTickets(1);
+            char again;
+            cout << "Book another? (y/n): ";
+            cin >> again;
+            cin.ignore(1000, '\n');
+            if (again == 'y' || again == 'Y') {
+                customerBookTicket(list, allBookings, bookingTotal,
+                                   vipName, vip.getDiscount());
+                vip.addPoints(25.0);
+                vip.addTickets(1);
+            }
+        } else if (choice == 4) {
+            customerViewMyBookings(allBookings, bookingTotal, uname);
+        } else if (choice == 5) {
+            customerEditBooking(allBookings, bookingTotal, uname, list);
+        } else if (choice == 6) {
+            customerViewAndSaveBookingSummary(allBookings, bookingTotal, uname);
+        } else if (choice == 7) {
+            customerSearchMenu(list);
+        } else if (choice == 8) {
+            customerSortMenu(list);
+        } else if (choice == 9) {
+            customerLeaveReview(list, reviews, reviewTotal, uname);
+        } else if (choice == 10) {
+            cout << "Enter Movie ID: ";
+            int mid; cin >> mid;
+            cin.ignore(1000, '\n');
+            MovieNode* m = list.findMovie(mid);
+            string t = (m != NULL) ? m->data.title : "Unknown";
+            displayReviewsForMovie(reviews, reviewTotal, mid, t);
+        } else if (choice == 11) {
+            customerAccountSummary(uname, vip.getLoyaltyPoints(),
+                                   vip.getTotalTickets(), allBookings, bookingTotal);
+        } else if (choice == 0) {
+            vip.logAction(uname, "VIP Logout");
+            cout << "  Logged out. Goodbye, VIP member " << uname << ".\n";
+        }
+    }
+}
+int main() {
+    printHeader("MOVIE DATABASE SYSTEM");
+    cout << "  TDS4223 - Data Structures & Algorithms\n";
+    printLine(44);
+    cout << "  Initializing system...\n";
+    createDefaultFiles();
+    ifstream checkReview("reviews.txt");
+    if (!checkReview.is_open()) {
+        ofstream rf("reviews.txt");
+        rf.close();
+    } else {
+        checkReview.close();
+    }
+    MovieList movieDB;
+    loadMoviesFromFile(movieDB);
+    loadDefaultMovies(movieDB);
+    BookingData* allBookings = new BookingData[200];
+    int bookingTotal = 0;
+    loadBookingsFromFile(allBookings, bookingTotal);
+    ReviewData* allReviews = new ReviewData[300];
+    int reviewTotal = 0;
+    loadReviewsFromFile(allReviews, reviewTotal);
+    for (int i = 0; i < bookingTotal; i++) {
+        if (allBookings[i].bookingID >= nextBookingID)
+            nextBookingID = allBookings[i].bookingID + 1;
+    }
+    for (int i = 0; i < reviewTotal; i++) {
+        if (allReviews[i].reviewID >= reviewIDCounter)
+            reviewIDCounter = allReviews[i].reviewID + 1;
+    }
+    cout << "  Movies loaded  : " << movieDB.getCount() << "\n";
+    cout << "  Bookings loaded: " << bookingTotal << "\n";
+    cout << "  Reviews loaded : " << reviewTotal  << "\n";
+    cout << "  System ready!\n";
+    int mainChoice = -1;
+    while (mainChoice != 0) {
+        printHeader("MAIN MENU");
+        cout << "  1. Staff / Admin Login\n";
+        cout << "  2. Customer Login\n";
+        cout << "  3. Customer Registration\n";
+        cout << "  4. VIP Customer Login\n";
+        cout << "  0. Exit\n";
+        printLine(44);
+        cout << "  Choice: ";
+        try {
+            cin >> mainChoice;
+            if (cin.fail()) {
+                cin.clear(); cin.ignore(1000, '\n');
+                throw invalid_argument("Please enter a number.");
+            }
+            if (!checkInput(mainChoice, 0, 4))
+                throw out_of_range("Choice must be 0 to 4.");
+        } catch (exception& e) {
+            cout << "[ERROR] " << e.what() << "\n";
+            cin.clear(); cin.ignore(1000, '\n');
+            continue;
+        }
+        cin.ignore(1000, '\n');
+        if (mainChoice == 1) {
+            runStaffModuleV2(movieDB, allBookings, bookingTotal,
+                             allReviews, reviewTotal);
+        } else if (mainChoice == 2) {
+            runCustomerModuleV2(movieDB, allBookings, bookingTotal,
+                                allReviews, reviewTotal);
+        } else if (mainChoice == 3) {
+            runCustomerRegister();
+        } else if (mainChoice == 4) {
+            runVIPModuleV2(movieDB, allBookings, bookingTotal,
+                           allReviews, reviewTotal);
+        } else if (mainChoice == 0) {
+            saveMoviesToFile(movieDB);
+            rewriteBookingsFile(allBookings, bookingTotal);
+            cout << "\n  Data saved successfully.\n";
+            cout << "  Thank you for using Movie Database System. Goodbye!\n";
+            printLine(44);
+        }
+    }
+    delete[] allBookings;
+    allBookings = NULL;
+    delete[] allReviews;
+    allReviews = NULL;
+    return 0;
+}
